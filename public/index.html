@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>GTStats</title>
+    <link rel="stylesheet" href="styles.css" />
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  </head>
+  <body>
+    <header class="app-header">
+      <div>
+        <h1>GTStats</h1>
+        <p>Giulia's tennis tracking dashboard</p>
+      </div>
+      <nav class="tab-nav">
+        <button class="tab-button active" data-tab="entry">Entry</button>
+        <button class="tab-button" data-tab="snapshot">Last Game Snapshot</button>
+        <button class="tab-button" data-tab="dashboard">Game Dashboard</button>
+        <button class="tab-button" data-tab="logs">Logs</button>
+      </nav>
+    </header>
+
+    <main>
+      <section class="tab-panel active" id="entry">
+        <div class="card score-strip">
+          <div class="score-row">
+            <div>
+              <p class="score-label">Giulia</p>
+              <p class="score-value" id="score-giulia">0</p>
+            </div>
+            <div>
+              <p class="score-label">Opponent</p>
+              <p class="score-value" id="score-opponent">0</p>
+            </div>
+            <div>
+              <p class="score-label">Games Won</p>
+              <p class="score-value" id="games-won">0</p>
+            </div>
+            <div>
+              <p class="score-label">Games Lost</p>
+              <p class="score-value" id="games-lost">0</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="card rally-strip">
+          <div class="rally-row">
+            <div>
+              <p class="score-label">Rally Length</p>
+              <p class="score-value" id="rally-length">0</p>
+            </div>
+            <div class="rally-actions">
+              <button class="primary tap-button rally-button" data-action="rally">Add Rally Hit</button>
+              <button class="ghost tap-button" data-action="resetRally">Reset Rally</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="grid entry-grid">
+          <div class="card point-card">
+            <h2>Point Won</h2>
+            <div class="button-grid two-column">
+              <button class="tap-button" data-action="wonOnServe">Won on Serve</button>
+              <button class="tap-button" data-action="returnWon">Return Won</button>
+            </div>
+            <div class="card-subsection">
+              <h3>Serve</h3>
+              <div class="button-grid">
+                <button class="tap-button" data-action="firstServeAttempt">1st Serve Attempted</button>
+                <button class="tap-button" data-action="secondServeAttempt">2nd Serve Attempted</button>
+                <button class="tap-button" data-action="doubleFault">Double Fault</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="card">
+            <h2>Errors</h2>
+            <div class="errors-grid">
+              <div>
+                <h3>Forehand</h3>
+                <div class="button-grid">
+                  <button class="tap-button" data-action="errorForehandLong">Long</button>
+                  <button class="tap-button" data-action="errorForehandWide">Wide</button>
+                  <button class="tap-button" data-action="errorForehandNet">Net</button>
+                </div>
+              </div>
+              <div>
+                <h3>Backhand</h3>
+                <div class="button-grid">
+                  <button class="tap-button" data-action="errorBackhandLong">Long</button>
+                  <button class="tap-button" data-action="errorBackhandWide">Wide</button>
+                  <button class="tap-button" data-action="errorBackhandNet">Net</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="card">
+            <h2>Winners</h2>
+            <div class="button-grid">
+              <button class="tap-button" data-action="winnerForehand">Forehand Winner</button>
+              <button class="tap-button" data-action="winnerBackhand">Backhand Winner</button>
+              <button class="tap-button" data-action="winnerAce">Ace</button>
+            </div>
+          </div>
+
+          <div class="card">
+            <h2>Opponent</h2>
+            <div class="button-grid">
+              <button class="tap-button" data-action="opponentDoubleFault">Opponent Double Fault</button>
+              <button class="tap-button" data-action="opponentWinner">Opponent Winner</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="card entry-footer">
+          <div>
+            <label>
+              Match Date
+              <input type="date" id="match-date" />
+            </label>
+            <label>
+              Opponent
+              <input type="text" id="match-opponent" placeholder="Opponent name" />
+            </label>
+            <label>
+              Notes
+              <input type="text" id="match-notes" placeholder="Match notes" />
+            </label>
+          </div>
+          <div class="button-group">
+            <button class="primary" id="record-game">Record Game</button>
+            <button class="danger" id="reset-game">Reset</button>
+          </div>
+        </div>
+      </section>
+
+      <section class="tab-panel" id="snapshot">
+        <div class="card">
+          <h2>Last Game Snapshot</h2>
+          <div class="snapshot-grid" id="snapshot-cards"></div>
+        </div>
+      </section>
+
+      <section class="tab-panel" id="dashboard">
+        <div class="card">
+          <div class="dashboard-header">
+            <h2>Game Dashboard</h2>
+            <select id="game-select"></select>
+          </div>
+          <div class="dashboard-grid">
+            <div class="chart-card">
+              <canvas id="points-chart"></canvas>
+            </div>
+            <div class="chart-card">
+              <canvas id="winners-chart"></canvas>
+            </div>
+            <div class="chart-card">
+              <canvas id="errors-chart"></canvas>
+            </div>
+            <div class="chart-card">
+              <canvas id="serve-chart"></canvas>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="tab-panel" id="logs">
+        <div class="card">
+          <h2>Play by Play Logs</h2>
+          <ul class="log-list" id="log-list"></ul>
+        </div>
+      </section>
+    </main>
+
+    <script src="app.js"></script>
+  </body>
+</html>
