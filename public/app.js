@@ -1,7 +1,7 @@
 const state = {
   score: {
-    giulia: 0,
-    opponent: 0,
+    pointsWon: 0,
+    pointsLost: 0,
     gamesWon: 0,
     gamesLost: 0
   },
@@ -45,9 +45,27 @@ const dom = {
 let charts = {};
 let gamesCache = [];
 
+const pointLabels = ["0", "15", "30", "40"];
+
+const formatPointScore = (pointsFor, pointsAgainst) => {
+  if (pointsFor >= 3 && pointsAgainst >= 3) {
+    if (pointsFor === pointsAgainst) {
+      return "40";
+    }
+    if (pointsFor === pointsAgainst + 1) {
+      return "in";
+    }
+    if (pointsAgainst === pointsFor + 1) {
+      return "out";
+    }
+  }
+
+  return pointLabels[Math.min(pointsFor, 3)];
+};
+
 const updateScoreboard = () => {
-  dom.scoreGiulia.textContent = state.score.giulia;
-  dom.scoreOpponent.textContent = state.score.opponent;
+  dom.scoreGiulia.textContent = formatPointScore(state.score.pointsWon, state.score.pointsLost);
+  dom.scoreOpponent.textContent = formatPointScore(state.score.pointsLost, state.score.pointsWon);
   dom.gamesWon.textContent = state.score.gamesWon;
   dom.gamesLost.textContent = state.score.gamesLost;
   dom.rallyLength.textContent = state.rallyLength;
@@ -69,7 +87,7 @@ const renderLogs = () => {
 };
 
 const resetState = () => {
-  Object.assign(state.score, { giulia: 0, opponent: 0, gamesWon: 0, gamesLost: 0 });
+  Object.assign(state.score, { pointsWon: 0, pointsLost: 0, gamesWon: 0, gamesLost: 0 });
   state.rallyLength = 0;
   Object.keys(state.serve).forEach((key) => (state.serve[key] = 0));
   Object.keys(state.winners).forEach((key) => (state.winners[key] = 0));
@@ -82,21 +100,21 @@ const resetState = () => {
 
 const scorePoint = (winner) => {
   if (winner === "giulia") {
-    state.score.giulia += 1;
+    state.score.pointsWon += 1;
   } else {
-    state.score.opponent += 1;
+    state.score.pointsLost += 1;
   }
 
-  const totalPoints = state.score.giulia + state.score.opponent;
-  if (totalPoints % 4 === 0 && totalPoints > 0) {
-    if (state.score.giulia > state.score.opponent) {
-      state.score.gamesWon += 1;
-      state.score.giulia = 0;
-      state.score.opponent = 0;
-    } else if (state.score.opponent > state.score.giulia) {
-      state.score.gamesLost += 1;
-      state.score.giulia = 0;
-      state.score.opponent = 0;
+  const lead = state.score.pointsWon - state.score.pointsLost;
+  if (state.score.pointsWon >= 4 || state.score.pointsLost >= 4) {
+    if (Math.abs(lead) >= 2) {
+      if (lead > 0) {
+        state.score.gamesWon += 1;
+      } else {
+        state.score.gamesLost += 1;
+      }
+      state.score.pointsWon = 0;
+      state.score.pointsLost = 0;
     }
   }
   updateScoreboard();
@@ -198,7 +216,13 @@ const buildSnapshotCards = (game) => {
     return;
   }
   const cards = [
-    { label: "Final Score", value: `${game.score?.giulia ?? 0} - ${game.score?.opponent ?? 0}` },
+    {
+      label: "Final Score",
+      value: `${formatPointScore(game.score?.pointsWon ?? 0, game.score?.pointsLost ?? 0)} - ${formatPointScore(
+        game.score?.pointsLost ?? 0,
+        game.score?.pointsWon ?? 0
+      )}`
+    },
     { label: "Games Won", value: game.score?.gamesWon ?? 0 },
     { label: "Games Lost", value: game.score?.gamesLost ?? 0 },
     { label: "Winners", value: game.totals?.winners ?? 0 },
@@ -240,8 +264,8 @@ const buildCharts = (games) => {
     return;
   }
   const labels = games.map((game) => game.matchDate || game.createdAt?.slice(0, 10));
-  const pointsWon = games.map((game) => game.score?.giulia ?? 0);
-  const pointsLost = games.map((game) => game.score?.opponent ?? 0);
+  const pointsWon = games.map((game) => game.score?.pointsWon ?? 0);
+  const pointsLost = games.map((game) => game.score?.pointsLost ?? 0);
   const winners = games.map((game) => game.totals?.winners ?? 0);
   const errors = games.map((game) => game.totals?.errors ?? 0);
   const aces = games.map((game) => game.winners?.aces ?? 0);
