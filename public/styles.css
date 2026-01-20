@@ -283,19 +283,31 @@ button.ghost {
   gap: 12px;
 }
 
-.log-list {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-  display: grid;
-  gap: 10px;
+.log-table {
+  overflow-x: auto;
 }
 
-.log-list li {
+.log-table table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 720px;
+}
+
+.log-table th,
+.log-table td {
+  text-align: left;
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--border);
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+.log-table th {
+  color: var(--muted);
+  font-weight: 600;
   background: #f8fafc;
-  border-radius: 10px;
-  border: 1px solid var(--border);
-  padding: 10px 12px;
+  position: sticky;
+  top: 0;
 }
 
 @media (max-width: 900px) {

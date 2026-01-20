@@ -28,7 +28,14 @@ const state = {
     opponentDoubleFault: 0,
     opponentWinner: 0
   },
-  logs: []
+  logs: [],
+  shotCount: 0,
+  context: {
+    serve: "-",
+    winner: "-",
+    miss: "-",
+    doubleFault: "-"
+  }
 };
 
 const dom = {
@@ -71,24 +78,67 @@ const updateScoreboard = () => {
   dom.rallyLength.textContent = state.rallyLength;
 };
 
-const addLog = (message) => {
-  const timestamp = new Date().toLocaleTimeString();
-  state.logs.unshift(`${timestamp} · ${message}`);
+const recordPointLog = (pointLabel) => {
+  state.shotCount += 1;
+  const gameNumber = state.score.gamesWon + state.score.gamesLost;
+  const score = `${formatPointScore(state.score.pointsWon, state.score.pointsLost)}-${formatPointScore(
+    state.score.pointsLost,
+    state.score.pointsWon
+  )}`;
+
+  state.logs.unshift({
+    game: `Game:${gameNumber}`,
+    score,
+    shot: `Shot:${state.shotCount}`,
+    rally: `Rally:${state.rallyLength}`,
+    point: `Point:${pointLabel}`,
+    miss: `Miss:${state.context.miss}`,
+    serve: `Serve:${state.context.serve}`,
+    winner: `Winner:${state.context.winner}`,
+    doubleFault: `DoubleFault:${state.context.doubleFault}`
+  });
+
+  state.rallyLength = 0;
+  state.context = {
+    serve: "-",
+    winner: "-",
+    miss: "-",
+    doubleFault: "-"
+  };
+
   renderLogs();
+  updateScoreboard();
 };
 
 const renderLogs = () => {
   dom.logList.innerHTML = "";
-  state.logs.slice(0, 30).forEach((log) => {
-    const item = document.createElement("li");
-    item.textContent = log;
-    dom.logList.appendChild(item);
+  state.logs.slice(0, 50).forEach((entry) => {
+    const row = document.createElement("tr");
+    row.innerHTML = `
+      <td>${entry.game}</td>
+      <td>${entry.score}</td>
+      <td>${entry.shot}</td>
+      <td>${entry.rally}</td>
+      <td>${entry.point}</td>
+      <td>${entry.miss}</td>
+      <td>${entry.serve}</td>
+      <td>${entry.winner}</td>
+      <td>${entry.doubleFault}</td>
+    `;
+    dom.logList.appendChild(row);
   });
 };
 
 const resetState = () => {
   Object.assign(state.score, { pointsWon: 0, pointsLost: 0, gamesWon: 0, gamesLost: 0 });
   state.rallyLength = 0;
+  state.shotCount = 0;
+  state.context = {
+    serve: "-",
+    winner: "-",
+    miss: "-",
+    doubleFault: "-"
+  };
   Object.keys(state.serve).forEach((key) => (state.serve[key] = 0));
   Object.keys(state.winners).forEach((key) => (state.winners[key] = 0));
   Object.keys(state.errors).forEach((key) => (state.errors[key] = 0));
@@ -124,90 +174,101 @@ const handleAction = (action) => {
   switch (action) {
     case "rally":
       state.rallyLength += 1;
-      addLog("Rally hit added.");
+      updateScoreboard();
       break;
     case "resetRally":
       state.rallyLength = 0;
-      addLog("Rally reset.");
+      updateScoreboard();
       break;
     case "firstServeAttempt":
       state.serve.firstAttempt += 1;
-      addLog("1st serve attempted (missed).");
+      state.context.serve = "Giulia attempted first serve and missed";
       break;
     case "secondServeAttempt":
       state.serve.secondAttempt += 1;
-      addLog("2nd serve attempted (missed).");
+      state.context.serve = "Giulia attempted second serve and missed";
       break;
     case "wonOnServe":
       scorePoint("giulia");
-      addLog("Won on serve.");
+      state.context.serve = state.context.serve === "-" ? "Giulia served and won point" : state.context.serve;
+      recordPointLog("won on serve");
       break;
     case "returnWon":
       scorePoint("giulia");
-      addLog("Return won.");
+      state.context.serve = "Opponent served and Giulia won";
+      recordPointLog("return won");
       break;
     case "winnerForehand":
       state.winners.forehand += 1;
-      addLog("Forehand winner.");
+      state.context.winner = "forehand";
       break;
     case "winnerBackhand":
       state.winners.backhand += 1;
-      addLog("Backhand winner.");
+      state.context.winner = "backhand";
       break;
     case "winnerAce":
       state.winners.aces += 1;
       scorePoint("giulia");
-      addLog("Ace winner.");
+      state.context.winner = "ace";
+      recordPointLog("won on serve");
       break;
     case "errorForehandLong":
       state.errors.forehandLong += 1;
       scorePoint("opponent");
-      addLog("Forehand error (long). Point to opponent.");
+      state.context.miss = "forehand long";
+      recordPointLog("-");
       break;
     case "errorForehandWide":
       state.errors.forehandWide += 1;
       scorePoint("opponent");
-      addLog("Forehand error (wide). Point to opponent.");
+      state.context.miss = "forehand wide";
+      recordPointLog("-");
       break;
     case "errorForehandNet":
       state.errors.forehandNet += 1;
       scorePoint("opponent");
-      addLog("Forehand error (net). Point to opponent.");
+      state.context.miss = "forehand net";
+      recordPointLog("-");
       break;
     case "errorBackhandLong":
       state.errors.backhandLong += 1;
       scorePoint("opponent");
-      addLog("Backhand error (long). Point to opponent.");
+      state.context.miss = "backhand long";
+      recordPointLog("-");
       break;
     case "errorBackhandWide":
       state.errors.backhandWide += 1;
       scorePoint("opponent");
-      addLog("Backhand error (wide). Point to opponent.");
+      state.context.miss = "backhand wide";
+      recordPointLog("-");
       break;
     case "errorBackhandNet":
       state.errors.backhandNet += 1;
       scorePoint("opponent");
-      addLog("Backhand error (net). Point to opponent.");
+      state.context.miss = "backhand net";
+      recordPointLog("-");
       break;
     case "doubleFault":
       state.special.doubleFault += 1;
       scorePoint("opponent");
-      addLog("Double fault. Point to opponent.");
+      state.context.doubleFault = "mine";
+      recordPointLog("-");
       break;
     case "opponentDoubleFault":
       state.special.opponentDoubleFault += 1;
       scorePoint("giulia");
-      addLog("Opponent double fault. Point to Giulia.");
+      state.context.doubleFault = "opponent";
+      recordPointLog("-");
       break;
     case "opponentWinner":
       state.special.opponentWinner += 1;
       scorePoint("opponent");
-      addLog("Opponent winner. Point to opponent.");
+      state.context.winner = "opponent winner";
+      recordPointLog("-");
       break;
     default:
       break;
   }
-  updateScoreboard();
 };
 
 const buildSnapshotCards = (game) => {
@@ -347,6 +408,81 @@ const buildCharts = (games) => {
   );
 };
 
+const safePercent = (numerator, denominator) => {
+  if (!denominator) {
+    return 0;
+  }
+  return Math.round((numerator / denominator) * 100);
+};
+
+const buildMetrics = (matchDate, opponent, notes) => {
+  const pointsWon = state.score.pointsWon;
+  const pointsLost = state.score.pointsLost;
+  const totalPoints = pointsWon + pointsLost;
+  const winnersTotal = state.winners.forehand + state.winners.backhand + state.winners.aces;
+  const errorsTotal =
+    state.errors.forehandLong +
+    state.errors.forehandWide +
+    state.errors.forehandNet +
+    state.errors.backhandLong +
+    state.errors.backhandWide +
+    state.errors.backhandNet;
+
+  return {
+    date: matchDate,
+    description: notes || opponent,
+    finalGameScore: `${formatPointScore(pointsWon, pointsLost)}-${formatPointScore(pointsLost, pointsWon)}`,
+    gamesWon: state.score.gamesWon,
+    gamesLost: state.score.gamesLost,
+    gameWinStats: safePercent(state.score.gamesWon, state.score.gamesWon + state.score.gamesLost),
+    pointsWon,
+    totalPointsPlayed: totalPoints,
+    percentPointsWon: safePercent(pointsWon, totalPoints),
+    winnerPercent: safePercent(winnersTotal, pointsWon || totalPoints),
+    winnerShots: winnersTotal,
+    winnerForehand: state.winners.forehand,
+    forehandWinners: state.winners.forehand,
+    winnerBackhand: state.winners.backhand,
+    backhandWinners: state.winners.backhand,
+    aces: state.winners.aces,
+    totalAces: state.winners.aces,
+    gameLossStats: safePercent(state.score.gamesLost, state.score.gamesWon + state.score.gamesLost),
+    pointsLost,
+    percentPointsLost: safePercent(pointsLost, totalPoints),
+    unforcedForehand: state.errors.forehandLong + state.errors.forehandWide + state.errors.forehandNet,
+    totalForehandErrors: state.errors.forehandLong + state.errors.forehandWide + state.errors.forehandNet,
+    unforcedForehandLong: state.errors.forehandLong,
+    unforcedForehandLongErrors: state.errors.forehandLong,
+    unforcedForehandNet: state.errors.forehandNet,
+    unforcedForehandNetErrors: state.errors.forehandNet,
+    unforcedForehandWide: state.errors.forehandWide,
+    unforcedForehandWideErrors: state.errors.forehandWide,
+    unforcedBackhand: state.errors.backhandLong + state.errors.backhandWide + state.errors.backhandNet,
+    totalBackhandErrors: state.errors.backhandLong + state.errors.backhandWide + state.errors.backhandNet,
+    unforcedBackhandLong: state.errors.backhandLong,
+    unforcedBackhandLongErrors: state.errors.backhandLong,
+    unforcedBackhandNet: state.errors.backhandNet,
+    unforcedBackhandNetErrors: state.errors.backhandNet,
+    unforcedBackhandWide: state.errors.backhandWide,
+    unforcedBackhandWideErrors: state.errors.backhandWide,
+    firstServe: state.serve.firstAttempt,
+    firstServeAttempted: state.serve.firstAttempt,
+    firstServeInPercent: 0,
+    firstServeWonDescription: "-",
+    firstServeWonPercent: 0,
+    firstServeWon: 0,
+    firstServeReturnWon: 0,
+    secondServe: state.serve.secondAttempt,
+    secondServeAttempted: state.serve.secondAttempt,
+    secondServeWonPercent: 0,
+    secondServeWon: 0,
+    secondServeReturnWon: 0,
+    doubleFaults: state.special.doubleFault,
+    winnerFromOpponent: state.special.opponentWinner,
+    doubleFaultsFromOpponent: state.special.opponentDoubleFault
+  };
+};
+
 const updateDashboard = (games) => {
   dom.gameSelect.innerHTML = "";
   games.forEach((game, index) => {
@@ -381,6 +517,7 @@ const saveGame = async () => {
   const opponent = document.getElementById("match-opponent").value;
   const notes = document.getElementById("match-notes").value;
 
+  const metrics = buildMetrics(matchDate, opponent, notes);
   const totals = {
     winners: state.winners.forehand + state.winners.backhand + state.winners.aces,
     errors:
@@ -403,6 +540,7 @@ const saveGame = async () => {
     errors: state.errors,
     special: state.special,
     totals,
+    metrics,
     logs: state.logs
   };
 
@@ -419,7 +557,6 @@ const saveGame = async () => {
 
   resetState();
   await refreshData();
-  addLog("Game saved to S3.");
 };
 
 const refreshData = async () => {
