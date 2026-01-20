@@ -9,6 +9,7 @@
   --primary: #2f6fed;
   --danger: #e64646;
   --success: #21a675;
+  --heading-size: 12px;
   --scorecard-bg: #0b120a;
   --scorecard-accent: #f3ff6b;
 }
@@ -137,7 +138,7 @@ main {
 }
 
 .score-label {
-  font-size: 13px;
+  font-size: var(--heading-size);
   text-transform: uppercase;
   letter-spacing: 0.04em;
   color: var(--muted);
@@ -170,7 +171,8 @@ main {
 }
 
 .point-card h2 {
-  margin-bottom: 12px;
+  margin-bottom: 8px;
+  font-size: var(--heading-size);
 }
 
 .card-subsection {
@@ -181,7 +183,7 @@ main {
 
 .card-subsection h3 {
   margin: 0 0 12px;
-  font-size: 14px;
+  font-size: 11px;
   color: var(--muted);
   text-transform: uppercase;
   letter-spacing: 0.04em;
@@ -195,10 +197,17 @@ main {
 
 .errors-grid h3 {
   margin: 0 0 12px;
-  font-size: 14px;
+  font-size: 11px;
   color: var(--muted);
   text-transform: uppercase;
   letter-spacing: 0.04em;
+}
+
+.card h2 {
+  font-size: var(--heading-size);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin: 0 0 10px;
 }
 
 .button-grid {
