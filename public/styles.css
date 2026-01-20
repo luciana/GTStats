@@ -185,7 +185,7 @@ main {
 }
 
 .inline-buttons {
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  flex-wrap: nowrap;
 }
 
 .point-card h2 {
@@ -229,9 +229,19 @@ main {
 }
 
 .button-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  display: flex;
+  flex-wrap: wrap;
   gap: 10px;
+}
+
+.button-grid > .tap-button {
+  flex: 1 1 140px;
+  min-width: 120px;
+}
+
+.inline-buttons > .tap-button {
+  flex: 1 1 0;
+  min-width: 0;
 }
 
 button {
