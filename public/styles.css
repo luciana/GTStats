@@ -209,8 +209,8 @@ main {
 
 .errors-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-  gap: 16px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
 }
 
 .errors-grid h3 {
@@ -231,12 +231,13 @@ main {
 .button-grid {
   display: flex;
   flex-wrap: wrap;
-  gap: 10px;
+  gap: 4px;
 }
 
 .button-grid > .tap-button {
-  flex: 1 1 140px;
-  min-width: 120px;
+  flex: 1 1 100px;
+  min-width: 0;
+  white-space: nowrap;
 }
 
 .inline-buttons > .tap-button {
