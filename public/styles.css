@@ -170,6 +170,20 @@ main {
   flex-wrap: wrap;
 }
 
+.rally-actions .rally-button {
+  min-width: 64px;
+  padding: 0 18px;
+  font-size: 20px;
+}
+
+.rally-plus {
+  font-weight: 700;
+}
+
+.inline-buttons {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
 .point-card h2 {
   margin-bottom: 8px;
   font-size: var(--heading-size);
