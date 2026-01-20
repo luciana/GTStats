@@ -9,6 +9,8 @@
   --primary: #2f6fed;
   --danger: #e64646;
   --success: #21a675;
+  --scorecard-bg: #0b120a;
+  --scorecard-accent: #f3ff6b;
 }
 
 * {
@@ -96,6 +98,29 @@ main {
 
 .score-strip {
   padding: 16px 20px;
+}
+
+.scorecard {
+  background: var(--scorecard-bg);
+  color: var(--scorecard-accent);
+  border-color: #1e2a1e;
+}
+
+.scorecard .score-label {
+  color: rgba(243, 255, 107, 0.8);
+}
+
+.scorecard .score-value {
+  font-family: "Share Tech Mono", "Courier New", monospace;
+  letter-spacing: 0.04em;
+}
+
+.score-value--big {
+  font-size: 36px;
+}
+
+.score-value--small {
+  font-size: 22px;
 }
 
 .rally-strip {

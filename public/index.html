@@ -5,6 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>GTStats</title>
     <link rel="stylesheet" href="styles.css" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap"
+      rel="stylesheet"
+    />
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   </head>
   <body>
@@ -23,23 +29,23 @@
 
     <main>
       <section class="tab-panel active" id="entry">
-        <div class="card score-strip">
+        <div class="card score-strip scorecard">
           <div class="score-row">
             <div>
               <p class="score-label">Giulia</p>
-              <p class="score-value" id="score-giulia">0</p>
+              <p class="score-value score-value--big" id="score-giulia">0</p>
             </div>
             <div>
               <p class="score-label">Opponent</p>
-              <p class="score-value" id="score-opponent">0</p>
+              <p class="score-value score-value--big" id="score-opponent">0</p>
             </div>
             <div>
               <p class="score-label">Games Won</p>
-              <p class="score-value" id="games-won">0</p>
+              <p class="score-value score-value--small" id="games-won">0</p>
             </div>
             <div>
               <p class="score-label">Games Lost</p>
-              <p class="score-value" id="games-lost">0</p>
+              <p class="score-value score-value--small" id="games-lost">0</p>
             </div>
           </div>
         </div>

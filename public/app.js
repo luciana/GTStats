@@ -51,6 +51,7 @@ const dom = {
 
 let charts = {};
 let gamesCache = [];
+const storageKey = "gtstats-session";
 
 const pointLabels = ["0", "15", "30", "40"];
 
@@ -76,6 +77,56 @@ const updateScoreboard = () => {
   dom.gamesWon.textContent = state.score.gamesWon;
   dom.gamesLost.textContent = state.score.gamesLost;
   dom.rallyLength.textContent = state.rallyLength;
+};
+
+const persistSession = () => {
+  const session = {
+    score: state.score,
+    rallyLength: state.rallyLength,
+    serve: state.serve,
+    winners: state.winners,
+    errors: state.errors,
+    special: state.special,
+    logs: state.logs,
+    shotCount: state.shotCount,
+    context: state.context
+  };
+  sessionStorage.setItem(storageKey, JSON.stringify(session));
+};
+
+const restoreSession = () => {
+  const raw = sessionStorage.getItem(storageKey);
+  if (!raw) {
+    return;
+  }
+  const saved = JSON.parse(raw);
+  if (saved?.score) {
+    state.score = saved.score;
+  }
+  if (typeof saved?.rallyLength === "number") {
+    state.rallyLength = saved.rallyLength;
+  }
+  if (saved?.serve) {
+    state.serve = saved.serve;
+  }
+  if (saved?.winners) {
+    state.winners = saved.winners;
+  }
+  if (saved?.errors) {
+    state.errors = saved.errors;
+  }
+  if (saved?.special) {
+    state.special = saved.special;
+  }
+  if (saved?.logs) {
+    state.logs = saved.logs;
+  }
+  if (typeof saved?.shotCount === "number") {
+    state.shotCount = saved.shotCount;
+  }
+  if (saved?.context) {
+    state.context = saved.context;
+  }
 };
 
 const recordPointLog = (pointLabel) => {
@@ -108,6 +159,7 @@ const recordPointLog = (pointLabel) => {
 
   renderLogs();
   updateScoreboard();
+  persistSession();
 };
 
 const renderLogs = () => {
@@ -146,6 +198,7 @@ const resetState = () => {
   state.logs = [];
   updateScoreboard();
   renderLogs();
+  persistSession();
 };
 
 const scorePoint = (winner) => {
@@ -269,6 +322,7 @@ const handleAction = (action) => {
     default:
       break;
   }
+  persistSession();
 };
 
 const buildSnapshotCards = (game) => {
@@ -557,6 +611,7 @@ const saveGame = async () => {
 
   resetState();
   await refreshData();
+  sessionStorage.removeItem(storageKey);
 };
 
 const refreshData = async () => {
@@ -602,6 +657,7 @@ const bindEvents = () => {
 };
 
 const init = async () => {
+  restoreSession();
   initTabs();
   bindEvents();
   updateScoreboard();
