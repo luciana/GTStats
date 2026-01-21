@@ -245,6 +245,10 @@ main {
   min-width: 0;
 }
 
+.single-button > .tap-button {
+  flex: 1 1 100%;
+}
+
 button {
   border: 1px solid var(--border);
   padding: 10px 12px;

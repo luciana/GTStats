@@ -64,17 +64,13 @@
         <div class="grid entry-grid">
           <div class="card point-card">
             <h2>Points</h2>
-            <div class="button-grid two-column">
-              <button class="tap-button" data-action="wonOnServe">Won on Serve</button>
-              <button class="tap-button" data-action="returnWon">Return Won</button>
+            <div class="button-grid inline-buttons">
+              <button class="tap-button" data-action="firstServeAttempt">1st Miss</button>
+              <button class="tap-button" data-action="secondServeAttempt">2nd Miss</button>
+              <button class="tap-button" data-action="wonOnServe">Won</button>
             </div>
-            <div class="card-subsection">
-              <h3>Serve</h3>
-              <div class="button-grid inline-buttons">
-                <button class="tap-button" data-action="firstServeAttempt">1st Miss</button>
-                <button class="tap-button" data-action="secondServeAttempt">2nd Miss</button>
-                <button class="tap-button" data-action="doubleFault">DF</button>
-              </div>
+            <div class="button-grid single-button">
+              <button class="tap-button" data-action="returnWon">Return Won</button>
             </div>
           </div>
 
@@ -112,8 +108,8 @@
           <div class="card">
             <h2>Opponent</h2>
             <div class="button-grid">
-              <button class="tap-button" data-action="opponentDoubleFault">Opponent Double Fault</button>
-              <button class="tap-button" data-action="opponentWinner">Opponent Winner</button>
+              <button class="tap-button" data-action="opponentDoubleFault">Double Fault</button>
+              <button class="tap-button" data-action="opponentWinner">Winner</button>
             </div>
           </div>
         </div>
@@ -184,6 +180,7 @@
                   <th>Point</th>
                   <th>Miss</th>
                   <th>Serve</th>
+                  <th>Server</th>
                   <th>Winner</th>
                   <th>Double Fault</th>
                 </tr>

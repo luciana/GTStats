@@ -32,6 +32,7 @@ const state = {
   shotCount: 0,
   context: {
     serve: "-",
+    server: "-",
     winner: "-",
     miss: "-",
     doubleFault: "-"
@@ -145,6 +146,7 @@ const recordPointLog = (pointLabel) => {
     point: `Point:${pointLabel}`,
     miss: `Miss:${state.context.miss}`,
     serve: `Serve:${state.context.serve}`,
+    server: `Server:${state.context.server}`,
     winner: `Winner:${state.context.winner}`,
     doubleFault: `DoubleFault:${state.context.doubleFault}`
   });
@@ -152,6 +154,7 @@ const recordPointLog = (pointLabel) => {
   state.rallyLength = 0;
   state.context = {
     serve: "-",
+    server: "-",
     winner: "-",
     miss: "-",
     doubleFault: "-"
@@ -174,6 +177,7 @@ const renderLogs = () => {
       <td>${entry.point}</td>
       <td>${entry.miss}</td>
       <td>${entry.serve}</td>
+      <td>${entry.server}</td>
       <td>${entry.winner}</td>
       <td>${entry.doubleFault}</td>
     `;
@@ -187,6 +191,7 @@ const resetState = () => {
   state.shotCount = 0;
   state.context = {
     serve: "-",
+    server: "-",
     winner: "-",
     miss: "-",
     doubleFault: "-"
@@ -236,19 +241,27 @@ const handleAction = (action) => {
     case "firstServeAttempt":
       state.serve.firstAttempt += 1;
       state.context.serve = "Giulia attempted first serve and missed";
+      state.context.server = "Giulia";
       break;
     case "secondServeAttempt":
       state.serve.secondAttempt += 1;
       state.context.serve = "Giulia attempted second serve and missed";
+      state.context.server = "Giulia";
+      state.special.doubleFault += 1;
+      scorePoint("opponent");
+      state.context.doubleFault = "mine";
+      recordPointLog("-");
       break;
     case "wonOnServe":
       scorePoint("giulia");
       state.context.serve = state.context.serve === "-" ? "Giulia served and won point" : state.context.serve;
+      state.context.server = "Giulia";
       recordPointLog("won on serve");
       break;
     case "returnWon":
       scorePoint("giulia");
       state.context.serve = "Opponent served and Giulia won";
+      state.context.server = "Opponent";
       recordPointLog("return won");
       break;
     case "winnerForehand":
