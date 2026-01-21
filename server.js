@@ -65,6 +65,7 @@ const getGameFromKey = async (key) => {
 
 app.get("/api/games", async (_req, res) => {
   try {
+    console.log("Listing games from S3 bucket:", bucketName);
     const objects = await listGameObjects();
     const sorted = objects
       .filter((object) => object.Key?.endsWith(".json"))
@@ -72,12 +73,14 @@ app.get("/api/games", async (_req, res) => {
     const games = await Promise.all(sorted.map((object) => getGameFromKey(object.Key)));
     res.json({ games });
   } catch (error) {
+    console.error("Failed to load games:", error);
     res.status(500).json({ error: "Unable to load games." });
   }
 });
 
 app.get("/api/games/latest", async (_req, res) => {
   try {
+    console.log("Fetching latest game from S3 bucket:", bucketName);
     const objects = await listGameObjects();
     const latest = objects
       .filter((object) => object.Key?.endsWith(".json"))
@@ -91,12 +94,15 @@ app.get("/api/games/latest", async (_req, res) => {
     const game = await getGameFromKey(latest.Key);
     res.json({ game });
   } catch (error) {
+    console.error("Failed to load latest game:", error);
     res.status(500).json({ error: "Unable to load latest game." });
   }
 });
 
 app.post("/api/games", async (req, res) => {
   try {
+    console.log("Saving game to S3 bucket:", bucketName);
+    console.log("Request payload keys:", Object.keys(req.body || {}));
     const timestamp = new Date().toISOString();
     const gameId = `${timestamp.replace(/[:.]/g, "-")}`;
     const game = {
@@ -115,6 +121,7 @@ app.post("/api/games", async (req, res) => {
     await s3Client.send(command);
     res.status(201).json({ game });
   } catch (error) {
+    console.error("Failed to save game:", error);
     res.status(500).json({ error: "Unable to save game." });
   }
 });

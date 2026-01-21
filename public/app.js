@@ -32,7 +32,7 @@ const state = {
   shotCount: 0,
   context: {
     serve: "-",
-    server: "-",
+    server: "Opponent",
     winner: "-",
     miss: "-",
     doubleFault: "-"
@@ -78,6 +78,10 @@ const updateScoreboard = () => {
   dom.gamesWon.textContent = state.score.gamesWon;
   dom.gamesLost.textContent = state.score.gamesLost;
   dom.rallyLength.textContent = state.rallyLength;
+};
+
+const setServerContext = (server) => {
+  state.context.server = server || "Opponent";
 };
 
 const persistSession = () => {
@@ -154,7 +158,7 @@ const recordPointLog = (pointLabel) => {
   state.rallyLength = 0;
   state.context = {
     serve: "-",
-    server: "-",
+    server: "Opponent",
     winner: "-",
     miss: "-",
     doubleFault: "-"
@@ -191,7 +195,7 @@ const resetState = () => {
   state.shotCount = 0;
   state.context = {
     serve: "-",
-    server: "-",
+    server: "Opponent",
     winner: "-",
     miss: "-",
     doubleFault: "-"
@@ -241,12 +245,12 @@ const handleAction = (action) => {
     case "firstServeAttempt":
       state.serve.firstAttempt += 1;
       state.context.serve = "Giulia attempted first serve and missed";
-      state.context.server = "Giulia";
+      setServerContext("Giulia");
       break;
     case "secondServeAttempt":
       state.serve.secondAttempt += 1;
       state.context.serve = "Giulia attempted second serve and missed";
-      state.context.server = "Giulia";
+      setServerContext("Giulia");
       state.special.doubleFault += 1;
       scorePoint("opponent");
       state.context.doubleFault = "mine";
@@ -255,81 +259,93 @@ const handleAction = (action) => {
     case "wonOnServe":
       scorePoint("giulia");
       state.context.serve = state.context.serve === "-" ? "Giulia served and won point" : state.context.serve;
-      state.context.server = "Giulia";
+      setServerContext("Giulia");
       recordPointLog("won on serve");
       break;
     case "returnWon":
       scorePoint("giulia");
       state.context.serve = "Opponent served and Giulia won";
-      state.context.server = "Opponent";
+      setServerContext("Opponent");
       recordPointLog("return won");
       break;
     case "winnerForehand":
       state.winners.forehand += 1;
       state.context.winner = "forehand";
+      setServerContext("Opponent");
       break;
     case "winnerBackhand":
       state.winners.backhand += 1;
       state.context.winner = "backhand";
+      setServerContext("Opponent");
       break;
     case "winnerAce":
       state.winners.aces += 1;
       scorePoint("giulia");
       state.context.winner = "ace";
+      setServerContext("Giulia");
       recordPointLog("won on serve");
       break;
     case "errorForehandLong":
       state.errors.forehandLong += 1;
       scorePoint("opponent");
       state.context.miss = "forehand long";
+      setServerContext("Opponent");
       recordPointLog("-");
       break;
     case "errorForehandWide":
       state.errors.forehandWide += 1;
       scorePoint("opponent");
       state.context.miss = "forehand wide";
+      setServerContext("Opponent");
       recordPointLog("-");
       break;
     case "errorForehandNet":
       state.errors.forehandNet += 1;
       scorePoint("opponent");
       state.context.miss = "forehand net";
+      setServerContext("Opponent");
       recordPointLog("-");
       break;
     case "errorBackhandLong":
       state.errors.backhandLong += 1;
       scorePoint("opponent");
       state.context.miss = "backhand long";
+      setServerContext("Opponent");
       recordPointLog("-");
       break;
     case "errorBackhandWide":
       state.errors.backhandWide += 1;
       scorePoint("opponent");
       state.context.miss = "backhand wide";
+      setServerContext("Opponent");
       recordPointLog("-");
       break;
     case "errorBackhandNet":
       state.errors.backhandNet += 1;
       scorePoint("opponent");
       state.context.miss = "backhand net";
+      setServerContext("Opponent");
       recordPointLog("-");
       break;
     case "doubleFault":
       state.special.doubleFault += 1;
       scorePoint("opponent");
       state.context.doubleFault = "mine";
+      setServerContext("Giulia");
       recordPointLog("-");
       break;
     case "opponentDoubleFault":
       state.special.opponentDoubleFault += 1;
       scorePoint("giulia");
       state.context.doubleFault = "opponent";
+      setServerContext("Opponent");
       recordPointLog("-");
       break;
     case "opponentWinner":
       state.special.opponentWinner += 1;
       scorePoint("opponent");
       state.context.winner = "opponent winner";
+      setServerContext("Opponent");
       recordPointLog("-");
       break;
     default:
@@ -650,7 +666,16 @@ const initTabs = () => {
 
 const bindEvents = () => {
   document.querySelectorAll("[data-action]").forEach((button) => {
-    button.addEventListener("click", () => handleAction(button.dataset.action));
+    button.addEventListener("click", () => {
+      handleAction(button.dataset.action);
+      button.classList.remove("is-pressed");
+      requestAnimationFrame(() => {
+        button.classList.add("is-pressed");
+      });
+      window.setTimeout(() => {
+        button.classList.remove("is-pressed");
+      }, 220);
+    });
   });
 
   document.getElementById("reset-game").addEventListener("click", () => {
@@ -675,6 +700,10 @@ const init = async () => {
   bindEvents();
   updateScoreboard();
   renderLogs();
+  const matchDateInput = document.getElementById("match-date");
+  if (matchDateInput && !matchDateInput.value) {
+    matchDateInput.value = new Date().toISOString().slice(0, 10);
+  }
   await refreshData();
 };
 

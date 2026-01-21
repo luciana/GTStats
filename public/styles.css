@@ -261,6 +261,13 @@ button {
   border-radius: 6px;
   min-height: 64px;
   font-size: 15px;
+  transition: box-shadow 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
+}
+
+.tap-button.is-pressed {
+  border-color: rgba(47, 111, 237, 0.6);
+  box-shadow: 0 0 0 4px rgba(47, 111, 237, 0.18);
+  transform: translateY(1px);
 }
 
 .rally-strip .tap-button {
