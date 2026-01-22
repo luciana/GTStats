@@ -519,7 +519,7 @@ const buildCharts = (games, selectedGame) => {
               const percent = Math.round((value / total) * 100);
               const { x, y } = element.tooltipPosition();
               ctx.save();
-              ctx.fillStyle = "#6b7280";
+              ctx.fillStyle = "#111827";
               ctx.font = "12px Inter, sans-serif";
               ctx.textAlign = "center";
               ctx.textBaseline = "middle";
