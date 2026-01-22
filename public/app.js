@@ -33,6 +33,7 @@ const state = {
   serving: false,
   context: {
     serve: "-",
+    server: null,
     winner: "-",
     miss: "-",
     doubleFault: "-"
@@ -145,7 +146,7 @@ const recordPointLog = (pointLabel) => {
     state.score.pointsWon
   )}`;
 
-  const serverLabel = state.serving ? "Giulia" : "Opponent";
+  const serverLabel = state.context.server ?? (state.serving ? "Giulia" : "Opponent");
   state.logs.unshift({
     game: `Game:${gameNumber}`,
     score,
@@ -162,6 +163,7 @@ const recordPointLog = (pointLabel) => {
   state.rallyLength = 0;
   state.context = {
     serve: "-",
+    server: null,
     winner: "-",
     miss: "-",
     doubleFault: "-"
@@ -198,6 +200,7 @@ const resetState = () => {
   state.shotCount = 0;
   state.context = {
     serve: "-",
+    server: null,
     winner: "-",
     miss: "-",
     doubleFault: "-"
@@ -247,10 +250,12 @@ const handleAction = (action) => {
     case "firstServeAttempt":
       state.serve.firstAttempt += 1;
       state.context.serve = "Giulia attempted first serve and missed";
+      state.context.server = "Giulia";
       break;
     case "secondServeAttempt":
       state.serve.secondAttempt += 1;
       state.context.serve = "Giulia attempted second serve and missed";
+      state.context.server = "Giulia";
       state.special.doubleFault += 1;
       scorePoint("opponent");
       state.context.doubleFault = "mine";
@@ -259,11 +264,13 @@ const handleAction = (action) => {
     case "wonOnServe":
       scorePoint("giulia");
       state.context.serve = state.context.serve === "-" ? "Giulia served and won point" : state.context.serve;
+      state.context.server = "Giulia";
       recordPointLog("won on serve");
       break;
     case "returnWon":
       scorePoint("giulia");
       state.context.serve = "Opponent served and Giulia won";
+      state.context.server = "Giulia";
       recordPointLog("return won");
       break;
     case "winnerForehand":
@@ -278,6 +285,7 @@ const handleAction = (action) => {
       state.winners.aces += 1;
       scorePoint("giulia");
       state.context.winner = "ace";
+      state.context.server = "Giulia";
       recordPointLog("won on serve");
       break;
     case "errorForehandLong":
@@ -346,19 +354,13 @@ const buildSnapshotCards = (game) => {
     return;
   }
   const cards = [
-    {
-      label: "Final Score",
-      value: `${formatPointScore(game.score?.pointsWon ?? 0, game.score?.pointsLost ?? 0)} - ${formatPointScore(
-        game.score?.pointsLost ?? 0,
-        game.score?.pointsWon ?? 0
-      )}`
-    },
     { label: "Games Won", value: game.score?.gamesWon ?? 0 },
     { label: "Games Lost", value: game.score?.gamesLost ?? 0 },
     { label: "Winners", value: game.totals?.winners ?? 0 },
     { label: "Errors", value: game.totals?.errors ?? 0 },
     { label: "Aces", value: game.winners?.aces ?? 0 },
     { label: "Double Faults", value: game.special?.doubleFault ?? 0 },
+    { label: "Opponent Double Faults", value: game.special?.opponentDoubleFault ?? 0 },
     { label: "Opponent Winners", value: game.special?.opponentWinner ?? 0 }
   ];
 
