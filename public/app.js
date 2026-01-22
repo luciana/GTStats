@@ -49,7 +49,8 @@ const dom = {
   logList: document.getElementById("log-list"),
   gameSelect: document.getElementById("game-select"),
   servingToggle: document.getElementById("serving-toggle"),
-  gameSummary: document.getElementById("game-summary")
+  gameSummary: document.getElementById("game-summary"),
+  gameMeta: document.getElementById("game-meta")
 };
 
 let charts = {};
@@ -385,6 +386,26 @@ const chartConfig = (labels, datasets, options = {}) => ({
   }
 });
 
+const renderGameMeta = (game) => {
+  if (!dom.gameMeta) {
+    return;
+  }
+  if (!game) {
+    dom.gameMeta.innerHTML = "<p>No game selected.</p>";
+    return;
+  }
+
+  const metaItems = [
+    { label: "Date", value: game.matchDate || "-" },
+    { label: "Opponent", value: game.opponent || "-" },
+    { label: "Notes", value: game.notes || "-" }
+  ];
+
+  dom.gameMeta.innerHTML = metaItems
+    .map((item) => `<div class="summary-item"><span>${item.label}</span><strong>${item.value}</strong></div>`)
+    .join("");
+};
+
 const renderGameSummary = (game) => {
   if (!dom.gameSummary) {
     return;
@@ -481,10 +502,33 @@ const buildCharts = (games, selectedGame) => {
       options: {
         responsive: true,
         plugins: {
-          legend: { display: false }
+          legend: { display: false },
+          tooltip: { enabled: false }
         },
         cutout: "60%"
-      }
+      },
+      plugins: [
+        {
+          id: "pointsLabels",
+          afterDatasetsDraw(chart) {
+            const { ctx } = chart;
+            const dataset = chart.data.datasets[0];
+            const total = dataset.data.reduce((sum, value) => sum + value, 0) || 1;
+            chart.getDatasetMeta(0).data.forEach((element, index) => {
+              const value = dataset.data[index];
+              const percent = Math.round((value / total) * 100);
+              const { x, y } = element.tooltipPosition();
+              ctx.save();
+              ctx.fillStyle = "#6b7280";
+              ctx.font = "12px Inter, sans-serif";
+              ctx.textAlign = "center";
+              ctx.textBaseline = "middle";
+              ctx.fillText(`${value} (${percent}%)`, x, y);
+              ctx.restore();
+            });
+          }
+        }
+      ]
     });
 
     charts.winnersErrors = new Chart(
@@ -660,6 +704,7 @@ const updateDashboard = (games) => {
     dom.gameSelect.appendChild(option);
   });
   const selectedGame = games[0];
+  renderGameMeta(selectedGame);
   renderGameSummary(selectedGame);
   buildCharts(games, selectedGame);
 };
@@ -783,6 +828,7 @@ const bindEvents = () => {
     const selected = gamesCache[Number(event.target.value)];
     if (selected) {
       buildSnapshotCards(selected);
+      renderGameMeta(selected);
       renderGameSummary(selected);
       buildCharts(gamesCache, selected);
     }

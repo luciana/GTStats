@@ -359,6 +359,10 @@ button.ghost {
   font-size: 12px;
 }
 
+.summary-card--meta {
+  max-width: 260px;
+}
+
 .summary-item {
   display: flex;
   justify-content: space-between;
