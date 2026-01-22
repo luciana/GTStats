@@ -47,7 +47,7 @@ If you have a tab-separated export of your historical stats (matching the spread
 2. Run the import script:
 
 ```bash
-node scripts/import_metrics.js path/to/history.tsv path/to/history.json
+node scripts/import_metrics.js path/to/history.tsv path/to/output-dir
 ```
 
-The output JSON is an array of game objects ready to upload to your S3 bucket under `games/<timestamp>.json` keys.
+The output is a set of `<match-date>-<row>.json` files ready to upload to your S3 bucket under `games/<id>.json` keys.

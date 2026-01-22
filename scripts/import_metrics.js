@@ -48,7 +48,7 @@ const parseFinalScore = (value) => {
   return { gamesWon: parts[0], gamesLost: parts[1], label: `${parts[0]}-${parts[1]}` };
 };
 
-const parseRow = (row) => {
+const parseRow = (row, index) => {
   const columns = row.split("\t");
   const date = parseDate(columns[0]);
   const description = columns[1] || "";
@@ -90,9 +90,12 @@ const parseRow = (row) => {
   const opponentWinners = parseNumber(columns[50]);
   const opponentDoubleFaults = parseNumber(columns[51]);
 
+  const createdAt = new Date().toISOString();
+  const baseId = date ? `${date}-${index + 1}` : `unknown-date-${index + 1}`;
+
   return {
-    id: new Date().toISOString().replace(/[:.]/g, "-"),
-    createdAt: new Date().toISOString(),
+    id: baseId,
+    createdAt,
     matchDate: date,
     opponent: "",
     notes: description,
@@ -187,19 +190,24 @@ const parseRow = (row) => {
 };
 
 const run = async () => {
-  const [inputPath, outputPath] = process.argv.slice(2);
-  if (!inputPath || !outputPath) {
-    console.error("Usage: node scripts/import_metrics.js <input.tsv> <output.json>");
+  const [inputPath, outputDir] = process.argv.slice(2);
+  if (!inputPath || !outputDir) {
+    console.error("Usage: node scripts/import_metrics.js <input.tsv> <output-dir>");
     process.exit(1);
   }
 
   const raw = await fs.readFile(inputPath, "utf-8");
   const lines = raw.split(/\r?\n/).filter((line) => line.trim());
   const rows = lines.slice(1);
-  const games = rows.map(parseRow);
+  const games = rows.map((row, index) => parseRow(row, index));
 
-  await fs.writeFile(outputPath, JSON.stringify(games, null, 2));
-  console.log(`Wrote ${games.length} games to ${outputPath}`);
+  await fs.mkdir(outputDir, { recursive: true });
+  await Promise.all(
+    games.map((game) =>
+      fs.writeFile(`${outputDir}/${game.id}.json`, JSON.stringify(game, null, 2))
+    )
+  );
+  console.log(`Wrote ${games.length} games to ${outputDir}`);
 };
 
 run();
