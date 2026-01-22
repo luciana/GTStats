@@ -343,6 +343,46 @@ button.ghost {
   gap: 16px;
 }
 
+.dashboard-grid--summary {
+  grid-template-columns: minmax(280px, 1fr) minmax(260px, 360px);
+  align-items: stretch;
+}
+
+.summary-card {
+  background: #f8fafc;
+  border-radius: 12px;
+  padding: 16px;
+  border: 1px solid var(--border);
+  display: grid;
+  gap: 8px;
+  font-size: 13px;
+}
+
+.summary-item {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 6px;
+}
+
+.summary-item:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.summary-item span {
+  color: var(--muted);
+}
+
+.chart-card h3 {
+  margin: 0 0 12px;
+  font-size: 12px;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
 .chart-card {
   background: #f8fafc;
   border-radius: 12px;

@@ -155,18 +155,35 @@
             <h2>Game Dashboard</h2>
             <select id="game-select"></select>
           </div>
+          <div class="dashboard-grid dashboard-grid--summary">
+            <div class="chart-card">
+              <h3>Points Won x Lost</h3>
+              <canvas id="points-pie-chart"></canvas>
+            </div>
+            <div class="summary-card" id="game-summary"></div>
+          </div>
           <div class="dashboard-grid">
             <div class="chart-card">
-              <canvas id="points-chart"></canvas>
+              <h3>Winners x Errors</h3>
+              <canvas id="winners-errors-chart"></canvas>
             </div>
             <div class="chart-card">
-              <canvas id="winners-chart"></canvas>
+              <h3>Aces x Double Faults</h3>
+              <canvas id="aces-doublefaults-chart"></canvas>
             </div>
             <div class="chart-card">
-              <canvas id="errors-chart"></canvas>
+              <h3>Forehand x Backhand Errors</h3>
+              <canvas id="forehand-backhand-errors-chart"></canvas>
+            </div>
+          </div>
+          <div class="dashboard-grid">
+            <div class="chart-card">
+              <h3>Points Won % Over Time</h3>
+              <canvas id="points-history-chart"></canvas>
             </div>
             <div class="chart-card">
-              <canvas id="serve-chart"></canvas>
+              <h3>Total Errors Over Time</h3>
+              <canvas id="errors-history-chart"></canvas>
             </div>
           </div>
         </div>

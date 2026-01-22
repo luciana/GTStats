@@ -48,7 +48,8 @@ const dom = {
   snapshotCards: document.getElementById("snapshot-cards"),
   logList: document.getElementById("log-list"),
   gameSelect: document.getElementById("game-select"),
-  servingToggle: document.getElementById("serving-toggle")
+  servingToggle: document.getElementById("serving-toggle"),
+  gameSummary: document.getElementById("game-summary")
 };
 
 let charts = {};
@@ -369,61 +370,111 @@ const buildSnapshotCards = (game) => {
   });
 };
 
-const chartConfig = (labels, data, label, color) => ({
+const chartConfig = (labels, datasets, options = {}) => ({
   type: "bar",
   data: {
     labels,
-    datasets: [{
-      label,
-      data,
-      backgroundColor: color
-    }]
+    datasets
   },
   options: {
     responsive: true,
     plugins: {
       legend: { position: "bottom" }
-    }
+    },
+    ...options
   }
 });
 
-const buildCharts = (games) => {
+const renderGameSummary = (game) => {
+  if (!dom.gameSummary) {
+    return;
+  }
+  if (!game) {
+    dom.gameSummary.innerHTML = "<p>No game selected.</p>";
+    return;
+  }
+
+  const pointsWon = game.score?.pointsWon ?? 0;
+  const pointsLost = game.score?.pointsLost ?? 0;
+  const totalPoints = pointsWon + pointsLost;
+  const winnersTotal = game.totals?.winners ?? 0;
+  const errorsTotal = game.totals?.errors ?? 0;
+  const errorsPercent = safePercent(errorsTotal, totalPoints);
+  const forehandErrors =
+    (game.errors?.forehandLong ?? 0) +
+    (game.errors?.forehandWide ?? 0) +
+    (game.errors?.forehandNet ?? 0);
+  const backhandErrors =
+    (game.errors?.backhandLong ?? 0) +
+    (game.errors?.backhandWide ?? 0) +
+    (game.errors?.backhandNet ?? 0);
+
+  const summaryItems = [
+    { label: "Game Score", value: `${game.score?.gamesWon ?? 0} - ${game.score?.gamesLost ?? 0}` },
+    { label: "Aces", value: game.winners?.aces ?? 0 },
+    { label: "1st Serves In", value: `${game.metrics?.firstServeInPercent ?? 0}%` },
+    { label: "1st Serve Won", value: `${game.metrics?.firstServeWonPercent ?? 0}%` },
+    { label: "Double Fault", value: game.special?.doubleFault ?? 0 },
+    { label: "Winners", value: winnersTotal },
+    { label: "Errors", value: `${errorsTotal} (${errorsPercent}%)` },
+    { label: "Fore / Back Errors", value: `${forehandErrors} / ${backhandErrors}` },
+    { label: "Total Points", value: totalPoints }
+  ];
+
+  dom.gameSummary.innerHTML = summaryItems
+    .map(
+      (item) =>
+        `<div class="summary-item"><span>${item.label}</span><strong>${item.value}</strong></div>`
+    )
+    .join("");
+};
+
+const buildCharts = (games, selectedGame) => {
   if (!games.length) {
     return;
   }
+
   const labels = games.map((game) => game.matchDate || game.createdAt?.slice(0, 10));
-  const pointsWon = games.map((game) => game.score?.pointsWon ?? 0);
-  const pointsLost = games.map((game) => game.score?.pointsLost ?? 0);
-  const winners = games.map((game) => game.totals?.winners ?? 0);
-  const errors = games.map((game) => game.totals?.errors ?? 0);
-  const aces = games.map((game) => game.winners?.aces ?? 0);
-  const doubleFaults = games.map((game) => game.special?.doubleFault ?? 0);
+  const pointsWonHistory = games.map((game) => game.metrics?.percentPointsWon ?? safePercent(
+    game.score?.pointsWon ?? 0,
+    (game.score?.pointsWon ?? 0) + (game.score?.pointsLost ?? 0)
+  ));
+  const forehandErrorsHistory = games.map((game) =>
+    (game.errors?.forehandLong ?? 0) + (game.errors?.forehandWide ?? 0) + (game.errors?.forehandNet ?? 0)
+  );
+  const backhandErrorsHistory = games.map((game) =>
+    (game.errors?.backhandLong ?? 0) + (game.errors?.backhandWide ?? 0) + (game.errors?.backhandNet ?? 0)
+  );
 
-  charts.points?.destroy();
-  charts.winners?.destroy();
-  charts.errors?.destroy();
-  charts.serve?.destroy();
+  charts.pointsPie?.destroy();
+  charts.winnersErrors?.destroy();
+  charts.acesFaults?.destroy();
+  charts.forehandBackhand?.destroy();
+  charts.pointsHistory?.destroy();
+  charts.errorsHistory?.destroy();
 
-  charts.points = new Chart(
-    document.getElementById("points-chart"),
-    {
-      type: "line",
+  if (selectedGame) {
+    const pointsWon = selectedGame.score?.pointsWon ?? 0;
+    const pointsLost = selectedGame.score?.pointsLost ?? 0;
+    const winnersTotal = selectedGame.totals?.winners ?? 0;
+    const errorsTotal = selectedGame.totals?.errors ?? 0;
+    const forehandErrors =
+      (selectedGame.errors?.forehandLong ?? 0) +
+      (selectedGame.errors?.forehandWide ?? 0) +
+      (selectedGame.errors?.forehandNet ?? 0);
+    const backhandErrors =
+      (selectedGame.errors?.backhandLong ?? 0) +
+      (selectedGame.errors?.backhandWide ?? 0) +
+      (selectedGame.errors?.backhandNet ?? 0);
+
+    charts.pointsPie = new Chart(document.getElementById("points-pie-chart"), {
+      type: "doughnut",
       data: {
-        labels,
+        labels: ["Points Won", "Points Lost"],
         datasets: [
           {
-            label: "Points Won",
-            data: pointsWon,
-            borderColor: "#2f6fed",
-            backgroundColor: "rgba(47, 111, 237, 0.2)",
-            tension: 0.3
-          },
-          {
-            label: "Points Lost",
-            data: pointsLost,
-            borderColor: "#e64646",
-            backgroundColor: "rgba(230, 70, 70, 0.2)",
-            tension: 0.3
+            data: [pointsWon, pointsLost],
+            backgroundColor: ["#3b82f6", "#ef4444"]
           }
         ]
       },
@@ -433,45 +484,94 @@ const buildCharts = (games) => {
           legend: { position: "bottom" }
         }
       }
-    }
-  );
+    });
 
-  charts.winners = new Chart(
-    document.getElementById("winners-chart"),
-    chartConfig(labels, winners, "Total Winners", "#21a675")
-  );
-
-  charts.errors = new Chart(
-    document.getElementById("errors-chart"),
-    chartConfig(labels, errors, "Total Errors", "#f59e0b")
-  );
-
-  charts.serve = new Chart(
-    document.getElementById("serve-chart"),
-    {
-      type: "bar",
-      data: {
-        labels,
-        datasets: [
+    charts.winnersErrors = new Chart(
+      document.getElementById("winners-errors-chart"),
+      chartConfig(
+        ["Winners", "Errors"],
+        [
           {
-            label: "Aces",
-            data: aces,
-            backgroundColor: "#6366f1"
-          },
-          {
-            label: "Double Faults",
-            data: doubleFaults,
-            backgroundColor: "#ef4444"
+            label: "Count",
+            data: [winnersTotal, errorsTotal],
+            backgroundColor: ["#22c55e", "#f97316"]
           }
         ]
-      },
-      options: {
-        responsive: true,
-        plugins: {
-          legend: { position: "bottom" }
+      )
+    );
+
+    charts.acesFaults = new Chart(
+      document.getElementById("aces-doublefaults-chart"),
+      chartConfig(
+        ["Aces", "Double Faults"],
+        [
+          {
+            label: "Count",
+            data: [selectedGame.winners?.aces ?? 0, selectedGame.special?.doubleFault ?? 0],
+            backgroundColor: ["#6366f1", "#ef4444"]
+          }
+        ]
+      )
+    );
+
+    charts.forehandBackhand = new Chart(
+      document.getElementById("forehand-backhand-errors-chart"),
+      chartConfig(
+        ["Forehand", "Backhand"],
+        [
+          {
+            label: "Errors",
+            data: [forehandErrors, backhandErrors],
+            backgroundColor: ["#f87171", "#fb7185"]
+          }
+        ],
+        { indexAxis: "y" }
+      )
+    );
+  }
+
+  charts.pointsHistory = new Chart(
+    document.getElementById("points-history-chart"),
+    chartConfig(
+      labels,
+      [
+        {
+          label: "% Points Won",
+          data: pointsWonHistory,
+          backgroundColor: "#3b82f6"
+        }
+      ],
+      {
+        scales: {
+          y: { beginAtZero: true, max: 100 }
         }
       }
-    }
+    )
+  );
+
+  charts.errorsHistory = new Chart(
+    document.getElementById("errors-history-chart"),
+    chartConfig(
+      labels,
+      [
+        {
+          label: "Forehand Errors",
+          data: forehandErrorsHistory,
+          backgroundColor: "#60a5fa"
+        },
+        {
+          label: "Backhand Errors",
+          data: backhandErrorsHistory,
+          backgroundColor: "#f97316"
+        }
+      ],
+      {
+        scales: {
+          x: { stacked: true },
+          y: { stacked: true, beginAtZero: true }
+        }
+      }
+    )
   );
 };
 
@@ -558,7 +658,9 @@ const updateDashboard = (games) => {
     option.textContent = `${game.matchDate || game.createdAt?.slice(0, 10)} · ${game.opponent || "Opponent"}`;
     dom.gameSelect.appendChild(option);
   });
-  buildCharts(games);
+  const selectedGame = games[0];
+  renderGameSummary(selectedGame);
+  buildCharts(games, selectedGame);
 };
 
 const fetchGames = async () => {
@@ -680,6 +782,8 @@ const bindEvents = () => {
     const selected = gamesCache[Number(event.target.value)];
     if (selected) {
       buildSnapshotCards(selected);
+      renderGameSummary(selected);
+      buildCharts(gamesCache, selected);
     }
   });
 };
