@@ -38,3 +38,16 @@ Visit `http://localhost:3000`.
 ## Data format
 
 Each game is stored in S3 under `games/<timestamp>.json` with fields for scores, serve stats, winners, errors, special events, and logs.
+
+## Importing existing history
+
+If you have a tab-separated export of your historical stats (matching the spreadsheet columns), you can convert it into the JSON format that the app saves in S3.
+
+1. Save the export as a tab-separated file (TSV).
+2. Run the import script:
+
+```bash
+node scripts/import_metrics.js path/to/history.tsv path/to/history.json
+```
+
+The output JSON is an array of game objects ready to upload to your S3 bucket under `games/<timestamp>.json` keys.
