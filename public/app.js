@@ -481,8 +481,9 @@ const buildCharts = (games, selectedGame) => {
       options: {
         responsive: true,
         plugins: {
-          legend: { position: "bottom" }
-        }
+          legend: { display: false }
+        },
+        cutout: "60%"
       }
     });
 
