@@ -261,32 +261,32 @@ const handleAction = (action) => {
       state.context.doubleFault = "mine";
       recordPointLog("-");
       break;
-    case "wonOnServe":
+    case "wonPoint":
       scorePoint("giulia");
-      state.context.serve = state.context.serve === "-" ? "Giulia served and won point" : state.context.serve;
+      state.context.serve = state.context.serve === "-" ? "Giulia won point" : state.context.serve;
       state.context.server = "Giulia";
-      recordPointLog("won on serve");
-      break;
-    case "returnWon":
-      scorePoint("giulia");
-      state.context.serve = "Opponent served and Giulia won";
-      state.context.server = "Giulia";
-      recordPointLog("return won");
+      recordPointLog("won");
       break;
     case "winnerForehand":
       state.winners.forehand += 1;
       state.context.winner = "forehand";
+      scorePoint("giulia");
+      state.context.server = "Giulia";
+      recordPointLog("won");
       break;
     case "winnerBackhand":
       state.winners.backhand += 1;
       state.context.winner = "backhand";
+      scorePoint("giulia");
+      state.context.server = "Giulia";
+      recordPointLog("won");
       break;
     case "winnerAce":
       state.winners.aces += 1;
       scorePoint("giulia");
       state.context.winner = "ace";
       state.context.server = "Giulia";
-      recordPointLog("won on serve");
+      recordPointLog("won");
       break;
     case "errorForehandLong":
       state.errors.forehandLong += 1;
