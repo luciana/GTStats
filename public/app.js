@@ -76,12 +76,30 @@ const formatPointScore = (pointsFor, pointsAgainst) => {
   return pointLabels[Math.min(pointsFor, 3)];
 };
 
+const currentGameSnapshot = () => ({
+  score: state.score,
+  winners: state.winners,
+  errors: state.errors,
+  special: state.special,
+  totals: {
+    winners: state.winners.forehand + state.winners.backhand + state.winners.aces,
+    errors:
+      state.errors.forehandLong +
+      state.errors.forehandWide +
+      state.errors.forehandNet +
+      state.errors.backhandLong +
+      state.errors.backhandWide +
+      state.errors.backhandNet
+  }
+});
+
 const updateScoreboard = () => {
   dom.scoreGiulia.textContent = formatPointScore(state.score.pointsWon, state.score.pointsLost);
   dom.scoreOpponent.textContent = formatPointScore(state.score.pointsLost, state.score.pointsWon);
   dom.gamesWon.textContent = state.score.gamesWon;
   dom.gamesLost.textContent = state.score.gamesLost;
   dom.rallyLength.textContent = state.rallyLength;
+  buildSnapshotCards(currentGameSnapshot());
 };
 
 const persistSession = () => {
@@ -779,8 +797,7 @@ const saveGame = async () => {
 
 const refreshData = async () => {
   gamesCache = await fetchGames();
-  const latest = gamesCache[0] || null;
-  buildSnapshotCards(latest);
+  buildSnapshotCards(currentGameSnapshot());
   updateDashboard(gamesCache);
 };
 
@@ -829,12 +846,17 @@ const bindEvents = () => {
   dom.gameSelect.addEventListener("change", (event) => {
     const selected = gamesCache[Number(event.target.value)];
     if (selected) {
-      buildSnapshotCards(selected);
       renderGameMeta(selected);
       renderGameSummary(selected);
       buildCharts(gamesCache, selected);
     }
   });
+};
+
+const toLocalDateString = () => {
+  const now = new Date();
+  const offsetMs = now.getTimezoneOffset() * 60000;
+  return new Date(now.getTime() - offsetMs).toISOString().slice(0, 10);
 };
 
 const init = async () => {
@@ -848,7 +870,7 @@ const init = async () => {
   }
   const matchDateInput = document.getElementById("match-date");
   if (matchDateInput && !matchDateInput.value) {
-    matchDateInput.value = new Date().toISOString().slice(0, 10);
+    matchDateInput.value = toLocalDateString();
   }
   await refreshData();
 };
