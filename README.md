@@ -39,6 +39,17 @@ S3_BUCKET=your_bucket_name
 - **Backend:** Deploy `backend/handler.js` as a Lambda function behind API Gateway.
 Set your frontend to call the API Gateway URL (for example, `https://<id>.execute-api.<region>.amazonaws.com`). Because the frontend uses relative `/api` calls, configure an Amplify rewrite rule to proxy `/api/*` to the API Gateway base URL or replace the fetch base URL in `frontend/public/app.js`.
 
+## Local preview (frontend)
+
+To preview the static site locally, run a simple HTTP server from the frontend build folder:
+
+```bash
+cd frontend/public
+python -m http.server 3000
+```
+
+Then open `http://localhost:3000` in your browser.
+
 ## Data format
 
 Each game is stored in S3 under `games/<timestamp>.json` with fields for scores, serve stats, winners, errors, special events, and logs.

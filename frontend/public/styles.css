@@ -37,6 +37,7 @@ body {
 .app-header h1 {
   margin: 0 0 4px;
   font-size: 18px;
+  color: #7c3aed;
 }
 
 .app-header p {
