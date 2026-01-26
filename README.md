@@ -1,6 +1,6 @@
 # GTStats
 
-GTStats is a Node.js + Express app that captures Giulia's tennis match stats, stores each match in an AWS S3 bucket, and renders interactive charts for snapshots and history.
+GTStats is a monorepo that captures Giulia's tennis match stats, stores each match in an AWS S3 bucket, and renders interactive charts for snapshots and history. The frontend is static and deploys to Amplify (or S3/CloudFront), while the backend runs as an AWS Lambda API.
 
 ## Features
 
@@ -9,31 +9,35 @@ GTStats is a Node.js + Express app that captures Giulia's tennis match stats, st
 - **Game Dashboard** with interactive charts powered by Chart.js.
 - **Logs** for play-by-play notes stored with each match.
 
+## Repository layout
+
+- `frontend/` — static site assets (deploy to Amplify Hosting).
+- `backend/` — Lambda handler for the `/api/*` routes.
+- `scripts/` — data import utilities for historical stats.
+
 ## Setup
 
-1. Install dependencies:
+1. Install backend dependencies:
 
 ```bash
+cd backend
 npm install
 ```
 
-2. Create an `.env` file in the project root:
+2. Configure backend environment variables (in Lambda or a local `.env` file):
 
 ```bash
 AWS_REGION=us-east-1
 AWS_ACCESS_KEY_ID=your_access_key
 AWS_SECRET_ACCESS_KEY=your_secret_key
 S3_BUCKET=your_bucket_name
-PORT=3000
 ```
 
-3. Start the server:
+3. Deploy:
 
-```bash
-npm start
-```
-
-Visit `http://localhost:3000`.
+- **Frontend:** Deploy `frontend/public/` via Amplify Hosting.
+- **Backend:** Deploy `backend/handler.js` as a Lambda function behind API Gateway.
+Set your frontend to call the API Gateway URL (for example, `https://<id>.execute-api.<region>.amazonaws.com`). Because the frontend uses relative `/api` calls, configure an Amplify rewrite rule to proxy `/api/*` to the API Gateway base URL or replace the fetch base URL in `frontend/public/app.js`.
 
 ## Data format
 
