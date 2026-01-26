@@ -1,0 +1,12 @@
+{
+  "name": "gtstats",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Giulia tennis stats tracker monorepo",
+  "workspaces": [
+    "backend"
+  ],
+  "scripts": {
+    "lint": "echo \"No lint configured\""
+  }
+}
