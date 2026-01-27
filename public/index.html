@@ -157,7 +157,10 @@
         <div class="card">
           <div class="dashboard-header">
             <h2>Game Dashboard</h2>
-            <select id="game-select"></select>
+            <div class="dashboard-controls">
+              <select id="game-select"></select>
+              <button class="ghost" id="view-logs">View Logs</button>
+            </div>
           </div>
           <div class="dashboard-grid dashboard-grid--summary">
             <div class="summary-card summary-card--meta" id="game-meta"></div>
@@ -197,7 +200,10 @@
 
       <section class="tab-panel" id="logs">
         <div class="card">
-          <h2>Play by Play Logs</h2>
+          <div class="log-header">
+            <h2>Play by Play Logs</h2>
+            <p id="log-subtitle">Current Game</p>
+          </div>
           <div class="log-table">
             <table>
               <thead>

@@ -8,7 +8,11 @@ const state = {
   rallyLength: 0,
   serve: {
     firstAttempt: 0,
-    secondAttempt: 0
+    secondAttempt: 0,
+    servePoints: 0,
+    firstServeIn: 0,
+    firstServeWon: 0,
+    secondServeWon: 0
   },
   winners: {
     forehand: 0,
@@ -34,10 +38,13 @@ const state = {
   serving: false,
   context: {
     serve: "-",
-    server: null,
     winner: "-",
     miss: "-",
-    doubleFault: "-"
+    doubleFault: "-",
+    firstServeMissed: false
+  },
+  points: {
+    won: 0
   }
 };
 
@@ -49,10 +56,12 @@ const dom = {
   rallyLength: document.getElementById("rally-length"),
   snapshotCards: document.getElementById("snapshot-cards"),
   logList: document.getElementById("log-list"),
+  logSubtitle: document.getElementById("log-subtitle"),
   gameSelect: document.getElementById("game-select"),
   servingToggle: document.getElementById("serving-toggle"),
   gameSummary: document.getElementById("game-summary"),
-  gameMeta: document.getElementById("game-meta")
+  gameMeta: document.getElementById("game-meta"),
+  viewLogsButton: document.getElementById("view-logs")
 };
 
 let charts = {};
@@ -114,7 +123,8 @@ const persistSession = () => {
     logs: state.logs,
     shotCount: state.shotCount,
     serving: state.serving,
-    context: state.context
+    context: state.context,
+    points: state.points
   };
   sessionStorage.setItem(storageKey, JSON.stringify(session));
 };
@@ -132,7 +142,7 @@ const restoreSession = () => {
     state.rallyLength = saved.rallyLength;
   }
   if (saved?.serve) {
-    state.serve = saved.serve;
+    state.serve = { ...state.serve, ...saved.serve };
   }
   if (saved?.winners) {
     state.winners = saved.winners;
@@ -153,7 +163,10 @@ const restoreSession = () => {
     state.serving = saved.serving;
   }
   if (saved?.context) {
-    state.context = saved.context;
+    state.context = { ...state.context, ...saved.context };
+  }
+  if (saved?.points) {
+    state.points = { ...state.points, ...saved.points };
   }
 };
 
@@ -165,7 +178,7 @@ const recordPointLog = (pointLabel) => {
     state.score.pointsWon
   )}`;
 
-  const serverLabel = state.context.server ?? (state.serving ? "Giulia" : "Opponent");
+  const serverLabel = state.serving ? "Giulia" : "Opponent";
   state.logs.unshift({
     game: `Game:${gameNumber}`,
     score,
@@ -182,10 +195,10 @@ const recordPointLog = (pointLabel) => {
   state.rallyLength = 0;
   state.context = {
     serve: "-",
-    server: null,
     winner: "-",
     miss: "-",
-    doubleFault: "-"
+    doubleFault: "-",
+    firstServeMissed: false
   };
 
   renderLogs();
@@ -193,9 +206,12 @@ const recordPointLog = (pointLabel) => {
   persistSession();
 };
 
-const renderLogs = () => {
+const renderLogs = (logs = state.logs, label = "Current Game") => {
   dom.logList.innerHTML = "";
-  state.logs.slice(0, 50).forEach((entry) => {
+  if (dom.logSubtitle) {
+    dom.logSubtitle.textContent = label;
+  }
+  logs.slice(0, 50).forEach((entry) => {
     const row = document.createElement("tr");
     row.innerHTML = `
       <td>${entry.game}</td>
@@ -219,16 +235,17 @@ const resetState = () => {
   state.shotCount = 0;
   state.context = {
     serve: "-",
-    server: null,
     winner: "-",
     miss: "-",
-    doubleFault: "-"
+    doubleFault: "-",
+    firstServeMissed: false
   };
   Object.keys(state.serve).forEach((key) => (state.serve[key] = 0));
   Object.keys(state.winners).forEach((key) => (state.winners[key] = 0));
   Object.keys(state.errors).forEach((key) => (state.errors[key] = 0));
   Object.keys(state.special).forEach((key) => (state.special[key] = 0));
   state.logs = [];
+  state.points.won = 0;
   updateScoreboard();
   renderLogs();
   persistSession();
@@ -260,6 +277,23 @@ const scorePoint = (winner) => {
   updateScoreboard();
 };
 
+const trackServePoint = (winner) => {
+  if (!state.serving) {
+    return;
+  }
+  state.serve.servePoints += 1;
+  if (!state.context.firstServeMissed) {
+    state.serve.firstServeIn += 1;
+  }
+  if (winner === "giulia") {
+    if (state.context.firstServeMissed) {
+      state.serve.secondServeWon += 1;
+    } else {
+      state.serve.firstServeWon += 1;
+    }
+  }
+};
+
 const handleAction = (action) => {
   switch (action) {
     case "rally":
@@ -273,100 +307,112 @@ const handleAction = (action) => {
     case "firstServeAttempt":
       state.serve.firstAttempt += 1;
       state.context.serve = "Giulia attempted first serve and missed";
-      state.context.server = "Giulia";
+      state.context.firstServeMissed = true;
       break;
     case "secondServeAttempt":
       state.serve.secondAttempt += 1;
       state.context.serve = "Giulia attempted second serve and missed";
-      state.context.server = "Giulia";
+      state.context.firstServeMissed = true;
       state.special.doubleFault += 1;
+      trackServePoint("opponent");
       scorePoint("opponent");
       state.context.doubleFault = "mine";
       recordPointLog("-");
       break;
     case "wonPoint":
+      state.points.won += 1;
+      trackServePoint("giulia");
       scorePoint("giulia");
       state.context.serve = state.context.serve === "-" ? "Giulia won point" : state.context.serve;
-      state.context.server = "Giulia";
       recordPointLog("won");
       break;
     case "winnerForehand":
       state.winners.forehand += 1;
       state.context.winner = "forehand";
+      trackServePoint("giulia");
       scorePoint("giulia");
-      state.context.server = "Giulia";
       recordPointLog("won");
       break;
     case "winnerBackhand":
       state.winners.backhand += 1;
       state.context.winner = "backhand";
+      trackServePoint("giulia");
       scorePoint("giulia");
-      state.context.server = "Giulia";
       recordPointLog("won");
       break;
     case "winnerAce":
       state.winners.aces += 1;
+      trackServePoint("giulia");
       scorePoint("giulia");
       state.context.winner = "ace";
-      state.context.server = "Giulia";
       recordPointLog("won");
       break;
     case "errorForehandLong":
       state.errors.forehandLong += 1;
+      trackServePoint("opponent");
       scorePoint("opponent");
       state.context.miss = "forehand long";
       recordPointLog("-");
       break;
     case "errorForehandWide":
       state.errors.forehandWide += 1;
+      trackServePoint("opponent");
       scorePoint("opponent");
       state.context.miss = "forehand wide";
       recordPointLog("-");
       break;
     case "errorForehandNet":
       state.errors.forehandNet += 1;
+      trackServePoint("opponent");
       scorePoint("opponent");
       state.context.miss = "forehand net";
       recordPointLog("-");
       break;
     case "errorBackhandLong":
       state.errors.backhandLong += 1;
+      trackServePoint("opponent");
       scorePoint("opponent");
       state.context.miss = "backhand long";
       recordPointLog("-");
       break;
     case "errorBackhandWide":
       state.errors.backhandWide += 1;
+      trackServePoint("opponent");
       scorePoint("opponent");
       state.context.miss = "backhand wide";
       recordPointLog("-");
       break;
     case "errorBackhandNet":
       state.errors.backhandNet += 1;
+      trackServePoint("opponent");
       scorePoint("opponent");
       state.context.miss = "backhand net";
       recordPointLog("-");
       break;
     case "doubleFault":
       state.special.doubleFault += 1;
+      trackServePoint("opponent");
       scorePoint("opponent");
       state.context.doubleFault = "mine";
       recordPointLog("-");
       break;
     case "opponentDoubleFault":
       state.special.opponentDoubleFault += 1;
+      trackServePoint("giulia");
       scorePoint("giulia");
       state.context.doubleFault = "opponent";
       recordPointLog("-");
       break;
     case "opponentAce":
       state.special.opponentAce += 1;
+      trackServePoint("opponent");
       scorePoint("opponent");
       state.context.winner = "opponent ace";
       recordPointLog("-");
       break;
     case "opponentWinner":
       state.special.opponentWinner += 1;
+      trackServePoint("opponent");
       scorePoint("opponent");
       state.context.winner = "opponent winner";
       recordPointLog("-");
@@ -401,6 +447,33 @@ const buildSnapshotCards = (game) => {
     div.innerHTML = `<strong>${card.label}</strong><p class="score-value">${card.value}</p>`;
     dom.snapshotCards.appendChild(div);
   });
+};
+
+const resolveWonPointCount = (game) => {
+  if (typeof game.points?.won === "number") {
+    return game.points.won;
+  }
+  if (Array.isArray(game.logs)) {
+    return game.logs.filter((entry) => entry.point === "Point:won").length;
+  }
+  return 0;
+};
+
+const resolvePointBreakdown = (game) => {
+  const pointsWon =
+    (game.winners?.forehand ?? 0) +
+    (game.winners?.backhand ?? 0) +
+    (game.winners?.aces ?? 0) +
+    resolveWonPointCount(game);
+  const pointsLost =
+    (game.errors?.forehandLong ?? 0) +
+    (game.errors?.forehandWide ?? 0) +
+    (game.errors?.forehandNet ?? 0) +
+    (game.errors?.backhandLong ?? 0) +
+    (game.errors?.backhandWide ?? 0) +
+    (game.errors?.backhandNet ?? 0) +
+    (game.special?.doubleFault ?? 0);
+  return { pointsWon, pointsLost };
 };
 
 const chartConfig = (labels, datasets, options = {}) => ({
@@ -467,6 +540,7 @@ const renderGameSummary = (game) => {
     { label: "Aces", value: game.winners?.aces ?? 0 },
     { label: "1st Serves In", value: `${game.metrics?.firstServeInPercent ?? 0}%` },
     { label: "1st Serve Won", value: `${game.metrics?.firstServeWonPercent ?? 0}%` },
+    { label: "2nd Serve Won", value: `${game.metrics?.secondServeWonPercent ?? 0}%` },
     { label: "Double Fault", value: game.special?.doubleFault ?? 0 },
     { label: "Winners", value: winnersTotal },
     { label: "Errors", value: `${errorsTotal} (${errorsPercent}%)` },
@@ -507,8 +581,7 @@ const buildCharts = (games, selectedGame) => {
   charts.errorsHistory?.destroy();
 
   if (selectedGame) {
-    const pointsWon = selectedGame.score?.pointsWon ?? 0;
-    const pointsLost = selectedGame.score?.pointsLost ?? 0;
+    const { pointsWon, pointsLost } = resolvePointBreakdown(selectedGame);
     const winnersTotal = selectedGame.totals?.winners ?? 0;
     const errorsTotal = selectedGame.totals?.errors ?? 0;
     const forehandErrors =
@@ -672,6 +745,8 @@ const buildMetrics = (matchDate, opponent, notes) => {
     state.errors.backhandWide +
     state.errors.backhandNet;
 
+  const servePoints = state.serve.servePoints;
+  const secondServePoints = Math.max(servePoints - state.serve.firstServeIn, 0);
   return {
     date: matchDate,
     description: notes || opponent,
@@ -711,15 +786,15 @@ const buildMetrics = (matchDate, opponent, notes) => {
     unforcedBackhandWideErrors: state.errors.backhandWide,
     firstServe: state.serve.firstAttempt,
     firstServeAttempted: state.serve.firstAttempt,
-    firstServeInPercent: 0,
+    firstServeInPercent: safePercent(state.serve.firstServeIn, servePoints),
     firstServeWonDescription: "-",
-    firstServeWonPercent: 0,
-    firstServeWon: 0,
+    firstServeWonPercent: safePercent(state.serve.firstServeWon, state.serve.firstServeIn),
+    firstServeWon: state.serve.firstServeWon,
     firstServeReturnWon: 0,
     secondServe: state.serve.secondAttempt,
     secondServeAttempted: state.serve.secondAttempt,
-    secondServeWonPercent: 0,
-    secondServeWon: 0,
+    secondServeWonPercent: safePercent(state.serve.secondServeWon, secondServePoints),
+    secondServeWon: state.serve.secondServeWon,
     secondServeReturnWon: 0,
     doubleFaults: state.special.doubleFault,
     winnerFromOpponent: state.special.opponentWinner,
@@ -792,6 +867,7 @@ const saveGame = async () => {
     winners: state.winners,
     errors: state.errors,
     special: state.special,
+    points: state.points,
     totals,
     metrics,
     logs: state.logs
@@ -819,16 +895,22 @@ const refreshData = async () => {
   updateDashboard(gamesCache);
 };
 
+const setActiveTab = (tabId) => {
+  const buttons = document.querySelectorAll(".tab-button");
+  const panels = document.querySelectorAll(".tab-panel");
+  buttons.forEach((btn) => btn.classList.remove("active"));
+  panels.forEach((panel) => panel.classList.remove("active"));
+  document.querySelector(`.tab-button[data-tab="${tabId}"]`)?.classList.add("active");
+  document.getElementById(tabId)?.classList.add("active");
+};
+
 const initTabs = () => {
   const buttons = document.querySelectorAll(".tab-button");
   const panels = document.querySelectorAll(".tab-panel");
 
   buttons.forEach((button) => {
     button.addEventListener("click", () => {
-      buttons.forEach((btn) => btn.classList.remove("active"));
-      panels.forEach((panel) => panel.classList.remove("active"));
-      button.classList.add("active");
-      document.getElementById(button.dataset.tab).classList.add("active");
+      setActiveTab(button.dataset.tab);
     });
   });
 };
@@ -866,9 +948,20 @@ const bindEvents = () => {
     if (selected) {
       renderGameMeta(selected);
       renderGameSummary(selected);
-      buildCharts(gamesCache, selected);
+      buildCharts([...gamesCache].reverse(), selected);
     }
   });
+
+  if (dom.viewLogsButton) {
+    dom.viewLogsButton.addEventListener("click", () => {
+      const selected = gamesCache[Number(dom.gameSelect.value)];
+      const label = selected
+        ? `${selected.matchDate || selected.createdAt?.slice(0, 10)} · ${selected.opponent || "Opponent"}`
+        : "Selected Game";
+      renderLogs(selected?.logs || [], label);
+      setActiveTab("logs");
+    });
+  }
 };
 
 const toLocalDateString = () => {
