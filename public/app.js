@@ -476,6 +476,34 @@ const resolvePointBreakdown = (game) => {
   return { pointsWon, pointsLost };
 };
 
+const resolveServeStats = (game, pointsPlayed) => {
+  const serve = game.serve || {};
+  let servePoints = serve.servePoints ?? 0;
+  const firstServeMisses = serve.firstAttempt ?? 0;
+  if (!servePoints) {
+    const attemptCount = (serve.firstAttempt ?? 0) + (serve.secondAttempt ?? 0);
+    if (attemptCount > 0) {
+      servePoints = attemptCount;
+    } else if (game.serving) {
+      servePoints = pointsPlayed;
+    }
+  }
+  const firstServeIn =
+    serve.firstServeIn ?? Math.max(servePoints - firstServeMisses, 0);
+  const firstServeWon = serve.firstServeWon ?? 0;
+  const secondServeWon = serve.secondServeWon ?? 0;
+  const secondServePoints = Math.max(servePoints - firstServeIn, 0);
+  return {
+    servePoints,
+    firstServeIn,
+    firstServeWon,
+    secondServeWon,
+    firstServeInPercent: safePercent(firstServeIn, servePoints),
+    firstServeWonPercent: safePercent(firstServeWon, firstServeIn),
+    secondServeWonPercent: safePercent(secondServeWon, secondServePoints)
+  };
+};
+
 const chartConfig = (labels, datasets, options = {}) => ({
   type: "bar",
   data: {
@@ -520,8 +548,7 @@ const renderGameSummary = (game) => {
     return;
   }
 
-  const pointsWon = game.score?.pointsWon ?? 0;
-  const pointsLost = game.score?.pointsLost ?? 0;
+  const { pointsWon, pointsLost } = resolvePointBreakdown(game);
   const totalPoints = pointsWon + pointsLost;
   const winnersTotal = game.totals?.winners ?? 0;
   const errorsTotal = game.totals?.errors ?? 0;
@@ -535,12 +562,13 @@ const renderGameSummary = (game) => {
     (game.errors?.backhandWide ?? 0) +
     (game.errors?.backhandNet ?? 0);
 
+  const serveStats = resolveServeStats(game, totalPoints);
   const summaryItems = [
     { label: "Game Score", value: `${game.score?.gamesWon ?? 0} - ${game.score?.gamesLost ?? 0}` },
     { label: "Aces", value: game.winners?.aces ?? 0 },
-    { label: "1st Serves In", value: `${game.metrics?.firstServeInPercent ?? 0}%` },
-    { label: "1st Serve Won", value: `${game.metrics?.firstServeWonPercent ?? 0}%` },
-    { label: "2nd Serve Won", value: `${game.metrics?.secondServeWonPercent ?? 0}%` },
+    { label: "1st Serves In", value: `${serveStats.firstServeInPercent}%` },
+    { label: "1st Serve Won", value: `${serveStats.firstServeWonPercent}%` },
+    { label: "2nd Serve Won", value: `${serveStats.secondServeWonPercent}%` },
     { label: "Double Fault", value: game.special?.doubleFault ?? 0 },
     { label: "Winners", value: winnersTotal },
     { label: "Errors", value: `${errorsTotal} (${errorsPercent}%)` },
