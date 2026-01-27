@@ -26,6 +26,7 @@ const state = {
   special: {
     doubleFault: 0,
     opponentDoubleFault: 0,
+    opponentAce: 0,
     opponentWinner: 0
   },
   logs: [],
@@ -250,6 +251,10 @@ const scorePoint = (winner) => {
       }
       state.score.pointsWon = 0;
       state.score.pointsLost = 0;
+      state.serving = !state.serving;
+      if (dom.servingToggle) {
+        dom.servingToggle.checked = state.serving;
+      }
     }
   }
   updateScoreboard();
@@ -354,6 +359,12 @@ const handleAction = (action) => {
       state.context.doubleFault = "opponent";
       recordPointLog("-");
       break;
+    case "opponentAce":
+      state.special.opponentAce += 1;
+      scorePoint("opponent");
+      state.context.winner = "opponent ace";
+      recordPointLog("-");
+      break;
     case "opponentWinner":
       state.special.opponentWinner += 1;
       scorePoint("opponent");
@@ -379,6 +390,7 @@ const buildSnapshotCards = (game) => {
     { label: "Aces", value: game.winners?.aces ?? 0 },
     { label: "Double Faults", value: game.special?.doubleFault ?? 0 },
     { label: "Opponent Double Faults", value: game.special?.opponentDoubleFault ?? 0 },
+    { label: "Opponent Aces", value: game.special?.opponentAce ?? 0 },
     { label: "Opponent Winners", value: game.special?.opponentWinner ?? 0 }
   ];
 
@@ -716,17 +728,23 @@ const buildMetrics = (matchDate, opponent, notes) => {
 };
 
 const updateDashboard = (games) => {
+  const sortedGames = [...games].sort((a, b) => {
+    const dateA = a.matchDate || a.createdAt || "";
+    const dateB = b.matchDate || b.createdAt || "";
+    return dateB.localeCompare(dateA);
+  });
   dom.gameSelect.innerHTML = "";
-  games.forEach((game, index) => {
+  sortedGames.forEach((game, index) => {
     const option = document.createElement("option");
     option.value = index;
     option.textContent = `${game.matchDate || game.createdAt?.slice(0, 10)} · ${game.opponent || "Opponent"}`;
     dom.gameSelect.appendChild(option);
   });
-  const selectedGame = games[0];
+  const selectedGame = sortedGames[0];
   renderGameMeta(selectedGame);
   renderGameSummary(selectedGame);
-  buildCharts(games, selectedGame);
+  buildCharts([...sortedGames].reverse(), selectedGame);
+  gamesCache = sortedGames;
 };
 
 const fetchGames = async () => {
