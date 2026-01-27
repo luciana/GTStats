@@ -37,7 +37,7 @@ const state = {
   shotCount: 0,
   serving: false,
   context: {
-    notes: "-",
+    serve: "-",
     winner: "-",
     miss: "-",
     doubleFault: "-",
@@ -121,11 +121,11 @@ const ensureGameStartLog = () => {
   state.logs.unshift({
     game: "Game:0",
     score: "0-0",
-    shot: "-",
-    rally: "-",
+    shot: "Shot:0",
+    rally: 0,
     point: "-",
     miss: "-",
-    notes: note,
+    serve: `Serve:${note}`,
     server: serverLabel,
     winner: "-",
     doubleFault: "-"
@@ -202,11 +202,11 @@ const recordPointLog = (pointLabel) => {
   state.logs.unshift({
     game: `Game:${gameNumber}`,
     score: scoreValue,
-    shot: state.shotCount,
+    shot: `Shot:${state.shotCount}`,
     rally: state.rallyLength,
     point: pointLabel,
     miss: state.context.miss,
-    notes: state.context.notes,
+    serve: `Serve:${state.context.serve}`,
     server: serverLabel,
     winner: state.context.winner,
     doubleFault: state.context.doubleFault
@@ -214,7 +214,7 @@ const recordPointLog = (pointLabel) => {
 
   state.rallyLength = 0;
   state.context = {
-    notes: "-",
+    serve: "-",
     winner: "-",
     miss: "-",
     doubleFault: "-",
@@ -240,7 +240,7 @@ const renderLogs = (logs = state.logs, label = "Current Game") => {
       <td>${entry.rally}</td>
       <td>${entry.point}</td>
       <td>${entry.miss}</td>
-      <td>${entry.notes}</td>
+      <td>${entry.serve}</td>
       <td>${entry.server}</td>
       <td>${entry.winner}</td>
       <td>${entry.doubleFault}</td>
@@ -254,7 +254,7 @@ const resetState = () => {
   state.rallyLength = 0;
   state.shotCount = 0;
   state.context = {
-    notes: "-",
+    serve: "-",
     winner: "-",
     miss: "-",
     doubleFault: "-",
@@ -327,12 +327,12 @@ const handleAction = (action) => {
       break;
     case "firstServeAttempt":
       state.serve.firstAttempt += 1;
-      state.context.notes = "Giulia attempted first serve and missed";
+      state.context.serve = "Giulia attempted first serve and missed";
       state.context.firstServeMissed = true;
       break;
     case "secondServeAttempt":
       state.serve.secondAttempt += 1;
-      state.context.notes = "Giulia attempted second serve and missed";
+      state.context.serve = "Giulia attempted second serve and missed";
       state.context.firstServeMissed = true;
       state.special.doubleFault += 1;
       trackServePoint("opponent");
@@ -344,7 +344,7 @@ const handleAction = (action) => {
       state.points.won += 1;
       trackServePoint("giulia");
       scorePoint("giulia");
-      state.context.notes = state.context.notes === "-" ? "Giulia won point" : state.context.notes;
+      state.context.serve = state.context.serve === "-" ? "Giulia won point" : state.context.serve;
       recordPointLog("won");
       break;
     case "winnerForehand":
