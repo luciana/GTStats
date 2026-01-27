@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>GTStats</title>
+    <link rel="stylesheet" href="styles.css" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap"
+      rel="stylesheet"
+    />
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  </head>
+  <body>
+    <header class="app-header">
+      <div>
+        <h1>GTStats</h1>
+        <p>Giulia's tennis tracking dashboard</p>
+      </div>
+      <nav class="tab-nav">
+        <button class="tab-button active" data-tab="entry">Entry</button>
+        <button class="tab-button" data-tab="snapshot">Last Game Snapshot</button>
+        <button class="tab-button" data-tab="dashboard">Game Dashboard</button>
+        <button class="tab-button" data-tab="logs">Logs</button>
+      </nav>
+    </header>
+
+    <main>
+      <section class="tab-panel active" id="entry">
+        <div class="card score-strip scorecard">
+          <div class="score-row">
+            <div>
+              <p class="score-label">Giulia</p>
+              <p class="score-value score-value--big" id="score-giulia">0</p>
+            </div>
+            <div>
+              <p class="score-label">Opponent</p>
+              <p class="score-value score-value--big" id="score-opponent">0</p>
+            </div>
+            <div>
+              <p class="score-label">Games Won</p>
+              <p class="score-value score-value--small" id="games-won">0</p>
+            </div>
+            <div>
+              <p class="score-label">Games Lost</p>
+              <p class="score-value score-value--small" id="games-lost">0</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="card rally-strip">
+          <div class="rally-row">
+            <p class="score-label">Rally Length</p>
+            <div class="rally-inline">
+              <span class="score-value" id="rally-length">0</span>
+              <button class="primary tap-button rally-button rally-plus" data-action="rally">+</button>
+              <button class="ghost tap-button rally-button rally-reset" data-action="resetRally">0</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="grid entry-grid">
+          <div class="card point-card">
+            <h2>Serves</h2>
+            <div class="serving-toggle">
+              <label>
+                <input type="checkbox" id="serving-toggle" />
+                Serving
+              </label>
+            </div>
+            <div class="button-grid inline-buttons">
+              <button class="tap-button" data-action="firstServeAttempt">1st Miss</button>
+              <button class="tap-button" data-action="secondServeAttempt">2nd Miss</button>
+            </div>
+          </div>
+
+          <div class="card point-card">
+            <h2>Points</h2>
+            <div class="button-grid single-button">
+              <button class="tap-button" data-action="wonPoint">Won</button>
+            </div>
+          </div>
+
+          <div class="card">
+            <h2>Errors</h2>
+            <div class="errors-grid">
+              <div>
+                <h3>Forehand</h3>
+                <div class="button-grid">
+                  <button class="tap-button" data-action="errorForehandLong">Long</button>
+                  <button class="tap-button" data-action="errorForehandWide">Wide</button>
+                  <button class="tap-button" data-action="errorForehandNet">Net</button>
+                </div>
+              </div>
+              <div>
+                <h3>Backhand</h3>
+                <div class="button-grid">
+                  <button class="tap-button" data-action="errorBackhandLong">Long</button>
+                  <button class="tap-button" data-action="errorBackhandWide">Wide</button>
+                  <button class="tap-button" data-action="errorBackhandNet">Net</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="card">
+            <h2>Winners</h2>
+            <div class="button-grid inline-buttons">
+              <button class="tap-button" data-action="winnerForehand">FH</button>
+              <button class="tap-button" data-action="winnerBackhand">BH</button>
+              <button class="tap-button" data-action="winnerAce">ACE</button>
+            </div>
+          </div>
+
+          <div class="card">
+            <h2>Opponent</h2>
+            <div class="button-grid">
+              <button class="tap-button" data-action="opponentDoubleFault">DF</button>
+              <button class="tap-button" data-action="opponentAce">ACE</button>
+              <button class="tap-button" data-action="opponentWinner">Winner</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="card entry-footer">
+          <div>
+            <label>
+              Match Date
+              <input type="date" id="match-date" />
+            </label>
+            <label>
+              Opponent
+              <input type="text" id="match-opponent" placeholder="Opponent name" />
+            </label>
+            <label>
+              Notes
+              <input type="text" id="match-notes" placeholder="Match notes" />
+            </label>
+          </div>
+          <div class="button-group">
+            <button class="primary" id="record-game">Record Game</button>
+            <button class="danger" id="reset-game">Reset</button>
+          </div>
+        </div>
+      </section>
+
+      <section class="tab-panel" id="snapshot">
+        <div class="card">
+          <h2>Last Game Snapshot</h2>
+          <div class="snapshot-grid" id="snapshot-cards"></div>
+        </div>
+      </section>
+
+      <section class="tab-panel" id="dashboard">
+        <div class="card">
+          <div class="dashboard-header">
+            <h2>Game Dashboard</h2>
+            <select id="game-select"></select>
+          </div>
+          <div class="dashboard-grid dashboard-grid--summary">
+            <div class="summary-card summary-card--meta" id="game-meta"></div>
+            <div class="chart-card">
+              <h3>Points Won x Lost</h3>
+              <canvas id="points-pie-chart"></canvas>
+            </div>
+            <div class="summary-card" id="game-summary"></div>
+          </div>
+          <div class="dashboard-grid">
+            <div class="chart-card">
+              <h3>Winners x Errors</h3>
+              <canvas id="winners-errors-chart"></canvas>
+            </div>
+            <div class="chart-card">
+              <h3>Aces x Double Faults</h3>
+              <canvas id="aces-doublefaults-chart"></canvas>
+            </div>
+            <div class="chart-card">
+              <h3>Forehand x Backhand Errors</h3>
+              <canvas id="forehand-backhand-errors-chart"></canvas>
+            </div>
+          </div>
+          <h3 class="dashboard-section-title">Over Time</h3>
+          <div class="dashboard-grid">
+            <div class="chart-card">
+              <h3>Points Won %</h3>
+              <canvas id="points-history-chart"></canvas>
+            </div>
+            <div class="chart-card">
+              <h3>Total Errors</h3>
+              <canvas id="errors-history-chart"></canvas>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="tab-panel" id="logs">
+        <div class="card">
+          <h2>Play by Play Logs</h2>
+          <div class="log-table">
+            <table>
+              <thead>
+                <tr>
+                  <th>Game</th>
+                  <th>Score</th>
+                  <th>Shot</th>
+                  <th>Rally</th>
+                  <th>Point</th>
+                  <th>Miss</th>
+                  <th>Serve</th>
+                  <th>Server</th>
+                  <th>Winner</th>
+                  <th>Double Fault</th>
+                </tr>
+              </thead>
+              <tbody id="log-list"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <script src="app.js"></script>
+  </body>
+</html>
