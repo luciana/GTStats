@@ -1,6 +1,6 @@
 # GTStats
 
-GTStats is a monorepo that captures Giulia's tennis match stats, stores each match in an AWS S3 bucket, and renders interactive charts for snapshots and history. The frontend is static and deploys to Amplify (or S3/CloudFront), while the backend runs as an AWS Lambda API.
+GTStats is a Node.js + Express app that captures Giulia's tennis match stats, stores each match in an AWS S3 bucket, and renders interactive charts for snapshots and history.
 
 ## Features
 
@@ -9,46 +9,31 @@ GTStats is a monorepo that captures Giulia's tennis match stats, stores each mat
 - **Game Dashboard** with interactive charts powered by Chart.js.
 - **Logs** for play-by-play notes stored with each match.
 
-## Repository layout
-
-- `frontend/` — static site assets (deploy to Amplify Hosting).
-- `backend/` — Lambda handler for the `/api/*` routes.
-- `scripts/` — data import utilities for historical stats.
-
 ## Setup
 
-1. Install backend dependencies:
+1. Install dependencies:
 
 ```bash
-cd backend
 npm install
 ```
 
-2. Configure backend environment variables (in Lambda or a local `.env` file):
+2. Create an `.env` file in the project root:
 
 ```bash
 AWS_REGION=us-east-1
 AWS_ACCESS_KEY_ID=your_access_key
 AWS_SECRET_ACCESS_KEY=your_secret_key
 S3_BUCKET=your_bucket_name
+PORT=3000
 ```
 
-3. Deploy:
-
-- **Frontend:** Deploy `frontend/public/` via Amplify Hosting.
-- **Backend:** Deploy `backend/handler.js` as a Lambda function behind API Gateway.
-Set your frontend to call the API Gateway URL (for example, `https://<id>.execute-api.<region>.amazonaws.com`). Because the frontend uses relative `/api` calls, configure an Amplify rewrite rule to proxy `/api/*` to the API Gateway base URL or replace the fetch base URL in `frontend/public/app.js`.
-
-## Local preview (frontend)
-
-To preview the static site locally, run a simple HTTP server from the frontend build folder:
+3. Start the server:
 
 ```bash
-cd frontend/public
-python -m http.server 3000
+npm start
 ```
 
-Then open `http://localhost:3000` in your browser.
+Visit `http://localhost:3000`.
 
 ## Data format
 
