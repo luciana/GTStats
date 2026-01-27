@@ -37,7 +37,7 @@ const state = {
   shotCount: 0,
   serving: false,
   context: {
-    serve: "-",
+    notes: "-",
     winner: "-",
     miss: "-",
     doubleFault: "-",
@@ -112,6 +112,26 @@ const updateScoreboard = () => {
   buildSnapshotCards(currentGameSnapshot());
 };
 
+const ensureGameStartLog = () => {
+  if (state.logs.length) {
+    return;
+  }
+  const serverLabel = state.serving ? "Giulia" : "Opponent";
+  const note = state.serving ? "Giulia started serving" : "Opponent started serving";
+  state.logs.unshift({
+    game: "Game:0",
+    score: "0-0",
+    shot: "-",
+    rally: "-",
+    point: "-",
+    miss: "-",
+    notes: note,
+    server: serverLabel,
+    winner: "-",
+    doubleFault: "-"
+  });
+};
+
 const persistSession = () => {
   const session = {
     score: state.score,
@@ -173,7 +193,7 @@ const restoreSession = () => {
 const recordPointLog = (pointLabel) => {
   state.shotCount += 1;
   const gameNumber = state.score.gamesWon + state.score.gamesLost;
-  const score = `${formatPointScore(state.score.pointsWon, state.score.pointsLost)}-${formatPointScore(
+  const scoreValue = `${formatPointScore(state.score.pointsWon, state.score.pointsLost)}-${formatPointScore(
     state.score.pointsLost,
     state.score.pointsWon
   )}`;
@@ -181,20 +201,20 @@ const recordPointLog = (pointLabel) => {
   const serverLabel = state.serving ? "Giulia" : "Opponent";
   state.logs.unshift({
     game: `Game:${gameNumber}`,
-    score,
-    shot: `Shot:${state.shotCount}`,
-    rally: `Rally:${state.rallyLength}`,
-    point: `Point:${pointLabel}`,
-    miss: `Miss:${state.context.miss}`,
-    serve: `Serve:${state.context.serve}`,
-    server: `Server:${serverLabel}`,
-    winner: `Winner:${state.context.winner}`,
-    doubleFault: `DoubleFault:${state.context.doubleFault}`
+    score: scoreValue,
+    shot: state.shotCount,
+    rally: state.rallyLength,
+    point: pointLabel,
+    miss: state.context.miss,
+    notes: state.context.notes,
+    server: serverLabel,
+    winner: state.context.winner,
+    doubleFault: state.context.doubleFault
   });
 
   state.rallyLength = 0;
   state.context = {
-    serve: "-",
+    notes: "-",
     winner: "-",
     miss: "-",
     doubleFault: "-",
@@ -220,7 +240,7 @@ const renderLogs = (logs = state.logs, label = "Current Game") => {
       <td>${entry.rally}</td>
       <td>${entry.point}</td>
       <td>${entry.miss}</td>
-      <td>${entry.serve}</td>
+      <td>${entry.notes}</td>
       <td>${entry.server}</td>
       <td>${entry.winner}</td>
       <td>${entry.doubleFault}</td>
@@ -234,7 +254,7 @@ const resetState = () => {
   state.rallyLength = 0;
   state.shotCount = 0;
   state.context = {
-    serve: "-",
+    notes: "-",
     winner: "-",
     miss: "-",
     doubleFault: "-",
@@ -247,6 +267,7 @@ const resetState = () => {
   state.logs = [];
   state.points.won = 0;
   updateScoreboard();
+  ensureGameStartLog();
   renderLogs();
   persistSession();
 };
@@ -306,12 +327,12 @@ const handleAction = (action) => {
       break;
     case "firstServeAttempt":
       state.serve.firstAttempt += 1;
-      state.context.serve = "Giulia attempted first serve and missed";
+      state.context.notes = "Giulia attempted first serve and missed";
       state.context.firstServeMissed = true;
       break;
     case "secondServeAttempt":
       state.serve.secondAttempt += 1;
-      state.context.serve = "Giulia attempted second serve and missed";
+      state.context.notes = "Giulia attempted second serve and missed";
       state.context.firstServeMissed = true;
       state.special.doubleFault += 1;
       trackServePoint("opponent");
@@ -323,7 +344,7 @@ const handleAction = (action) => {
       state.points.won += 1;
       trackServePoint("giulia");
       scorePoint("giulia");
-      state.context.serve = state.context.serve === "-" ? "Giulia won point" : state.context.serve;
+      state.context.notes = state.context.notes === "-" ? "Giulia won point" : state.context.notes;
       recordPointLog("won");
       break;
     case "winnerForehand":
@@ -959,6 +980,8 @@ const bindEvents = () => {
   if (dom.servingToggle) {
     dom.servingToggle.addEventListener("change", (event) => {
       state.serving = event.target.checked;
+      ensureGameStartLog();
+      renderLogs();
       persistSession();
     });
   }
