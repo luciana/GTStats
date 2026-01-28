@@ -11,6 +11,7 @@ const state = {
     secondAttempt: 0,
     servePoints: 0,
     firstServeIn: 0,
+    secondServeIn: 0,
     firstServeWon: 0,
     secondServeWon: 0
   },
@@ -312,9 +313,6 @@ const trackServePoint = (winner) => {
     return;
   }
   state.serve.servePoints += 1;
-  if (!state.context.firstServeMissed) {
-    state.serve.firstServeIn += 1;
-  }
   if (winner === "giulia") {
     if (state.context.firstServeMissed) {
       state.serve.secondServeWon += 1;
@@ -348,6 +346,16 @@ const handleAction = (action) => {
       scorePoint("opponent");
       state.context.doubleFault = "mine";
       recordPointLog("-");
+      break;
+    case "firstServeIn":
+      state.serve.firstServeIn += 1;
+      state.context.firstServeMissed = false;
+      state.context.serve = "Giulia first serve in";
+      break;
+    case "secondServeIn":
+      state.serve.secondServeIn += 1;
+      state.context.firstServeMissed = true;
+      state.context.serve = "Giulia second serve in";
       break;
     case "wonPoint":
       state.points.won += 1;
@@ -510,17 +518,24 @@ const resolvePointBreakdown = (game) => {
 
 const resolveServeStats = (game, pointsPlayed) => {
   const serve = game.serve || {};
-  const totalServes = (serve.firstAttempt ?? 0) + (serve.secondAttempt ?? 0);
+  const totalServes =
+    (serve.firstAttempt ?? 0) +
+    (serve.secondAttempt ?? 0) +
+    (serve.firstServeIn ?? 0) +
+    (serve.secondServeIn ?? 0);
   const servePoints = totalServes || serve.servePoints || (game.serving ? pointsPlayed : 0);
   const firstServeIn = serve.firstServeIn ?? 0;
+  const secondServeIn = serve.secondServeIn ?? 0;
   const firstServeWon = serve.firstServeWon ?? 0;
   const secondServeWon = serve.secondServeWon ?? 0;
   return {
     servePoints,
     firstServeIn,
+    secondServeIn,
     firstServeWon,
     secondServeWon,
     firstServeInPercent: safePercent(firstServeIn, servePoints),
+    secondServeInPercent: safePercent(secondServeIn, servePoints),
     firstServeWonPercent: safePercent(firstServeWon, servePoints),
     secondServeWonPercent: safePercent(secondServeWon, servePoints)
   };
@@ -809,7 +824,11 @@ const buildMetrics = (matchDate, opponent, notes) => {
     state.errors.backhandWide +
     state.errors.backhandNet;
 
-  const totalServes = state.serve.firstAttempt + state.serve.secondAttempt;
+  const totalServes =
+    state.serve.firstAttempt +
+    state.serve.secondAttempt +
+    state.serve.firstServeIn +
+    state.serve.secondServeIn;
   const servePoints = totalServes || state.serve.servePoints;
   return {
     date: matchDate,
@@ -856,6 +875,7 @@ const buildMetrics = (matchDate, opponent, notes) => {
     firstServeWon: state.serve.firstServeWon,
     secondServe: state.serve.secondAttempt,
     secondServeAttempted: state.serve.secondAttempt,
+    secondServeInPercent: safePercent(state.serve.secondServeIn, servePoints),
     secondServeWonPercent: safePercent(state.serve.secondServeWon, servePoints),
     secondServeWon: state.serve.secondServeWon,
     doubleFaults: state.special.doubleFault,
