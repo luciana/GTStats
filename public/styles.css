@@ -40,6 +40,16 @@ body {
   color: #7c3aed;
 }
 
+.home-link {
+  color: inherit;
+  text-decoration: none;
+}
+
+.home-link:hover,
+.home-link:focus {
+  text-decoration: underline;
+}
+
 .app-header p {
   margin: 0;
   color: var(--muted);
@@ -350,7 +360,7 @@ button.ghost {
 
 .dashboard-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 16px;
 }
 
@@ -496,6 +506,10 @@ button.ghost {
 
   .app-header {
     position: relative;
+  }
+
+  .dashboard-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .tab-nav {

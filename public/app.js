@@ -82,10 +82,10 @@ const formatPointScore = (pointsFor, pointsAgainst) => {
       return "40";
     }
     if (pointsFor === pointsAgainst + 1) {
-      return "in";
+      return "AD";
     }
     if (pointsAgainst === pointsFor + 1) {
-      return "out";
+      return "";
     }
   }
 
@@ -349,6 +349,15 @@ const scorePoint = (winner) => {
   updateScoreboard();
 };
 
+const updateServeButtonsState = () => {
+  const serveButtons = document.querySelectorAll(
+    '[data-action="firstServeAttempt"],[data-action="secondServeAttempt"],[data-action="firstServeIn"],[data-action="secondServeIn"],[data-action="winnerAce"]'
+  );
+  serveButtons.forEach((button) => {
+    button.disabled = !state.serving;
+  });
+};
+
 const trackServePoint = (winner) => {
   if (!state.serving) {
     return;
@@ -385,7 +394,7 @@ const handleAction = (action) => {
       state.special.doubleFault += 1;
       trackServePoint("opponent");
       scorePoint("opponent");
-      state.context.doubleFault = "mine";
+      state.context.doubleFault = "Giulia";
       recordPointLog("-");
       break;
     case "firstServeIn":
@@ -477,7 +486,7 @@ const handleAction = (action) => {
       state.special.doubleFault += 1;
       trackServePoint("opponent");
       scorePoint("opponent");
-      state.context.doubleFault = "mine";
+      state.context.doubleFault = "Giulia";
       recordPointLog("-");
       break;
     case "opponentDoubleFault":
@@ -943,6 +952,10 @@ const buildMetrics = (matchDate, opponent, notes) => {
     returnPointsWonPercent: safePercent(state.points.returnWon, pointsWon),
     servePointsWon: state.points.serveWon,
     servePointsWonPercent: safePercent(state.points.serveWon, pointsWon),
+    serveInBreakdown: {
+      firstServeInPercent: safePercent(state.serve.firstServeIn, servePoints),
+      secondServeInPercent: safePercent(state.serve.secondServeIn, servePoints)
+    },
     winnerPercent: safePercent(winnersTotal, pointsWon),
     winnerShots: winnersTotal,
     winnerForehand: state.winners.forehand,
@@ -1119,12 +1132,18 @@ const bindEvents = () => {
       state.serving = event.target.checked;
       ensureGameStartLog();
       renderLogs();
+      updateServeButtonsState();
       persistSession();
     });
   }
 
   document.getElementById("reset-game").addEventListener("click", () => {
     resetState();
+    if (dom.servingToggle) {
+      dom.servingToggle.checked = false;
+      state.serving = false;
+    }
+    updateServeButtonsState();
   });
 
   document.getElementById("record-game").addEventListener("click", () => {
@@ -1176,6 +1195,7 @@ const init = async () => {
   if (dom.servingToggle) {
     dom.servingToggle.checked = state.serving;
   }
+  updateServeButtonsState();
   const matchDateInput = document.getElementById("match-date");
   if (matchDateInput && !matchDateInput.value) {
     matchDateInput.value = toLocalDateString();
