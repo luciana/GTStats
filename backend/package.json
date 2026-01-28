@@ -1,0 +1,10 @@
+{
+  "name": "gtstats-backend",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Lambda handlers for GTStats",
+  "main": "handler.js",
+  "dependencies": {
+    "@aws-sdk/client-s3": "^3.637.0"
+  }
+}
