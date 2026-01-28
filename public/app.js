@@ -46,7 +46,8 @@ const state = {
   },
   points: {
     won: 0,
-    returnWon: 0
+    returnWon: 0,
+    serveWon: 0
   }
 };
 
@@ -59,11 +60,14 @@ const dom = {
   snapshotCards: document.getElementById("snapshot-cards"),
   logList: document.getElementById("log-list"),
   logSubtitle: document.getElementById("log-subtitle"),
+  metricsList: document.getElementById("metrics-list"),
+  metricsSubtitle: document.getElementById("metrics-subtitle"),
   gameSelect: document.getElementById("game-select"),
   servingToggle: document.getElementById("serving-toggle"),
   gameSummary: document.getElementById("game-summary"),
   gameMeta: document.getElementById("game-meta"),
-  viewLogsButton: document.getElementById("view-logs")
+  viewLogsButton: document.getElementById("view-logs"),
+  viewMetricsButton: document.getElementById("view-metrics")
 };
 
 let charts = {};
@@ -140,6 +144,41 @@ const ensureGameStartLog = () => {
     server: serverLabel,
     winner: "-",
     doubleFault: "-"
+  });
+};
+
+const renderMetrics = (game) => {
+  if (!dom.metricsList) {
+    return;
+  }
+  if (!game) {
+    dom.metricsList.innerHTML = "<p>No game selected.</p>";
+    return;
+  }
+  if (dom.metricsSubtitle) {
+    dom.metricsSubtitle.textContent = game.matchDate || game.createdAt?.slice(0, 10) || "Selected Game";
+  }
+  const flattenMetrics = (label, obj) =>
+    Object.entries(obj || {}).map(([key, value]) => ({
+      label: `${label} · ${key.replace(/([A-Z])/g, " $1").replace(/^./, (char) => char.toUpperCase())}`,
+      value
+    }));
+  const metricItems = [
+    ...flattenMetrics("Score", game.score),
+    ...flattenMetrics("Serve", game.serve),
+    ...flattenMetrics("Winners", game.winners),
+    ...flattenMetrics("Errors", game.errors),
+    ...flattenMetrics("Special", game.special),
+    ...flattenMetrics("Totals", game.totals),
+    ...flattenMetrics("Points", game.points),
+    ...flattenMetrics("Metrics", game.metrics)
+  ];
+  dom.metricsList.innerHTML = "";
+  metricItems.forEach((item) => {
+    const div = document.createElement("div");
+    div.className = "snapshot-card";
+    div.innerHTML = `<strong>${item.label}</strong><p class="score-value">${item.value}</p>`;
+    dom.metricsList.appendChild(div);
   });
 };
 
@@ -363,6 +402,8 @@ const handleAction = (action) => {
       state.points.won += 1;
       if (!state.serving) {
         state.points.returnWon += 1;
+      } else {
+        state.points.serveWon += 1;
       }
       trackServePoint("giulia");
       scorePoint("giulia");
@@ -482,10 +523,21 @@ const buildSnapshotCards = (game) => {
     { label: "Opponent Aces", value: game.special?.opponentAce ?? 0 },
     { label: "Opponent Winners", value: game.special?.opponentWinner ?? 0 }
   ];
-  const metricsEntries = Object.entries(game.metrics || {}).map(([key, value]) => ({
-    label: key.replace(/([A-Z])/g, " $1").replace(/^./, (char) => char.toUpperCase()),
-    value
-  }));
+  const flattenEntries = (label, obj) =>
+    Object.entries(obj || {}).map(([key, value]) => ({
+      label: `${label} · ${key.replace(/([A-Z])/g, " $1").replace(/^./, (char) => char.toUpperCase())}`,
+      value
+    }));
+  const metricsEntries = [
+    ...flattenEntries("Score", game.score),
+    ...flattenEntries("Serve", game.serve),
+    ...flattenEntries("Winners", game.winners),
+    ...flattenEntries("Errors", game.errors),
+    ...flattenEntries("Special", game.special),
+    ...flattenEntries("Totals", game.totals),
+    ...flattenEntries("Points", game.points),
+    ...flattenEntries("Metrics", game.metrics)
+  ];
 
   dom.snapshotCards.innerHTML = "";
   [...cards, ...metricsEntries].forEach((card) => {
@@ -651,6 +703,8 @@ const buildCharts = (games, selectedGame) => {
   charts.winnersErrors?.destroy();
   charts.acesFaults?.destroy();
   charts.forehandBackhand?.destroy();
+  charts.serveInPie?.destroy();
+  charts.serviceReturn?.destroy();
   charts.pointsHistory?.destroy();
   charts.errorsHistory?.destroy();
 
@@ -752,6 +806,42 @@ const buildCharts = (games, selectedGame) => {
         { indexAxis: "y" }
       )
     );
+
+    const serveStats = resolveServeStats(selectedGame, pointsWon + pointsLost);
+    charts.serveInPie = new Chart(document.getElementById("serve-in-pie-chart"), {
+      type: "doughnut",
+      data: {
+        labels: ["1st Serve In", "2nd Serve In"],
+        datasets: [
+          {
+            data: [serveStats.firstServeInPercent, serveStats.secondServeInPercent],
+            backgroundColor: ["#34d399", "#facc15"]
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          legend: { display: false },
+          tooltip: { enabled: false }
+        },
+        cutout: "60%"
+      }
+    });
+
+    charts.serviceReturn = new Chart(
+      document.getElementById("service-return-points-chart"),
+      chartConfig(
+        ["Service Points Won", "Return Points Won"],
+        [
+          {
+            label: "Count",
+            data: [selectedGame.points?.serveWon ?? 0, selectedGame.points?.returnWon ?? 0],
+            backgroundColor: ["#3b82f6", "#f97316"]
+          }
+        ]
+      )
+    );
   }
 
   charts.pointsHistory = new Chart(
@@ -851,6 +941,8 @@ const buildMetrics = (matchDate, opponent, notes) => {
     percentPointsWon: safePercent(pointsWon, totalPoints),
     returnPointsWon: state.points.returnWon,
     returnPointsWonPercent: safePercent(state.points.returnWon, pointsWon),
+    servePointsWon: state.points.serveWon,
+    servePointsWonPercent: safePercent(state.points.serveWon, pointsWon),
     winnerPercent: safePercent(winnersTotal, pointsWon),
     winnerShots: winnersTotal,
     winnerForehand: state.winners.forehand,
@@ -912,6 +1004,7 @@ const updateDashboard = (games) => {
   renderGameMeta(selectedGame);
   renderGameSummary(selectedGame);
   buildCharts([...sortedGames].reverse(), selectedGame);
+  renderMetrics(selectedGame);
   gamesCache = sortedGames;
 };
 
@@ -1044,6 +1137,7 @@ const bindEvents = () => {
       renderGameMeta(selected);
       renderGameSummary(selected);
       buildCharts([...gamesCache].reverse(), selected);
+      renderMetrics(selected);
     }
   });
 
@@ -1055,6 +1149,14 @@ const bindEvents = () => {
         : "Selected Game";
       renderLogs(selected?.logs || [], label);
       setActiveTab("logs");
+    });
+  }
+
+  if (dom.viewMetricsButton) {
+    dom.viewMetricsButton.addEventListener("click", () => {
+      const selected = gamesCache[Number(dom.gameSelect.value)];
+      renderMetrics(selected);
+      setActiveTab("metrics");
     });
   }
 };

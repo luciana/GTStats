@@ -168,6 +168,7 @@
             <div class="dashboard-controls">
               <select id="game-select"></select>
               <button class="ghost" id="view-logs">View Logs</button>
+              <button class="ghost" id="view-metrics">Metrics</button>
             </div>
           </div>
           <div class="dashboard-grid dashboard-grid--summary">
@@ -190,6 +191,14 @@
             <div class="chart-card">
               <h3>Forehand x Backhand Errors</h3>
               <canvas id="forehand-backhand-errors-chart"></canvas>
+            </div>
+            <div class="chart-card">
+              <h3>1st vs 2nd Serves In</h3>
+              <canvas id="serve-in-pie-chart"></canvas>
+            </div>
+            <div class="chart-card">
+              <h3>Service x Return Points Won</h3>
+              <canvas id="service-return-points-chart"></canvas>
             </div>
           </div>
           <h3 class="dashboard-section-title">Over Time</h3>
@@ -231,6 +240,16 @@
               <tbody id="log-list"></tbody>
             </table>
           </div>
+        </div>
+      </section>
+
+      <section class="tab-panel" id="metrics">
+        <div class="card">
+          <div class="log-header">
+            <h2>Metrics</h2>
+            <p id="metrics-subtitle">Selected Game</p>
+          </div>
+          <div class="metrics-grid" id="metrics-list"></div>
         </div>
       </section>
     </main>

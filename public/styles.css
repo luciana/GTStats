@@ -442,6 +442,20 @@ button.ghost {
   gap: 12px;
 }
 
+#metrics-list,
+.metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 12px;
+  margin-top: 16px;
+}
+
+#metrics-subtitle {
+  margin: 0;
+  color: var(--muted);
+  font-size: 12px;
+}
+
 #log-subtitle {
   margin: 0;
   color: var(--muted);
