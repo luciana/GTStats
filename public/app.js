@@ -45,7 +45,8 @@ const state = {
     firstServeMissed: false
   },
   points: {
-    won: 0
+    won: 0,
+    returnWon: 0
   }
 };
 
@@ -276,6 +277,7 @@ const resetState = () => {
   Object.keys(state.special).forEach((key) => (state.special[key] = 0));
   state.logs = [];
   state.points.won = 0;
+  state.points.returnWon = 0;
   updateScoreboard();
   ensureGameStartLog();
   renderLogs();
@@ -359,6 +361,9 @@ const handleAction = (action) => {
       break;
     case "wonPoint":
       state.points.won += 1;
+      if (!state.serving) {
+        state.points.returnWon += 1;
+      }
       trackServePoint("giulia");
       scorePoint("giulia");
       state.context.serve = state.context.serve === "-" ? "Giulia won point" : state.context.serve;
@@ -477,9 +482,13 @@ const buildSnapshotCards = (game) => {
     { label: "Opponent Aces", value: game.special?.opponentAce ?? 0 },
     { label: "Opponent Winners", value: game.special?.opponentWinner ?? 0 }
   ];
+  const metricsEntries = Object.entries(game.metrics || {}).map(([key, value]) => ({
+    label: key.replace(/([A-Z])/g, " $1").replace(/^./, (char) => char.toUpperCase()),
+    value
+  }));
 
   dom.snapshotCards.innerHTML = "";
-  cards.forEach((card) => {
+  [...cards, ...metricsEntries].forEach((card) => {
     const div = document.createElement("div");
     div.className = "snapshot-card";
     div.innerHTML = `<strong>${card.label}</strong><p class="score-value">${card.value}</p>`;
@@ -840,6 +849,8 @@ const buildMetrics = (matchDate, opponent, notes) => {
     pointsWon,
     totalPointsPlayed: totalPoints,
     percentPointsWon: safePercent(pointsWon, totalPoints),
+    returnPointsWon: state.points.returnWon,
+    returnPointsWonPercent: safePercent(state.points.returnWon, pointsWon),
     winnerPercent: safePercent(winnersTotal, pointsWon),
     winnerShots: winnersTotal,
     winnerForehand: state.winners.forehand,

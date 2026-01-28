@@ -61,6 +61,7 @@ Serve percentage metrics:
 - **Won** → `points.won`, point won. (`wonPoint`)
 - **FH** → `winners.forehand`, point won. (`winnerForehand`)
 - **BH** → `winners.backhand`, point won. (`winnerBackhand`)
+- **Return Points Won** → increments `points.returnWon` when **Won** is clicked while **Serving** is unchecked.
 
 ### Errors (points lost)
 - **Forehand/Backhand Long/Wide/Net** → increments corresponding `errors.*` field and counts as a point lost. (`errorForehandLong`, `errorForehandWide`, `errorForehandNet`, `errorBackhandLong`, `errorBackhandWide`, `errorBackhandNet`)
@@ -76,6 +77,7 @@ Serve percentage metrics:
 - **Points Lost** = all errors + `special.doubleFault + special.opponentWinner + special.opponentAce`
 - **Total Points Played** = `shotCount` (fallback to points won + points lost if needed)
 - **Winner %** = winning shots (`winners.forehand + winners.backhand`) divided by points won
+- **Return Points Won %** = `points.returnWon / pointsWon`
 
 ### Logs
 - Logs store numeric `game` and `shot` values and raw serve notes (e.g., “Giulia won point”). The UI renders prefixes like `Game:`, `Shot:`, and `Serve:` for display.

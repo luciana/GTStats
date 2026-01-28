@@ -189,6 +189,16 @@ main {
   flex-wrap: nowrap;
 }
 
+.serve-button-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.serve-button-stack .button-grid.inline-buttons {
+  justify-content: flex-start;
+}
+
 .point-card h2 {
   margin-bottom: 8px;
   font-size: var(--heading-size);
