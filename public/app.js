@@ -605,14 +605,12 @@ const resolvePointBreakdown = (game) => {
 
 const resolveServeStats = (game, pointsPlayed) => {
   const serve = game.serve || {};
-  const totalServes =
-    (serve.firstAttempt ?? 0) +
-    (serve.secondAttempt ?? 0) +
-    (serve.firstServeIn ?? 0) +
-    (serve.secondServeIn ?? 0);
-  const servePoints = totalServes || serve.servePoints || (game.serving ? pointsPlayed : 0);
   const firstServeIn = serve.firstServeIn ?? 0;
   const secondServeIn = serve.secondServeIn ?? 0;
+  const secondServeAttempt = serve.secondAttempt ?? 0;
+
+  const resolvedServePoints = firstServeIn + secondServeIn + secondServeAttempt;
+  const servePoints = serve.servePoints || resolvedServePoints || (game.serving ? pointsPlayed : 0);
   const firstServeWon = serve.firstServeWon ?? 0;
   const secondServeWon = serve.secondServeWon ?? 0;
   return {
@@ -690,7 +688,8 @@ const renderGameSummary = (game) => {
   const summaryItems = [
     { label: "Game Score", value: `${game.score?.gamesWon ?? 0} - ${game.score?.gamesLost ?? 0}` },
     { label: "Aces", value: game.winners?.aces ?? 0 },
-    { label: "1st Serves In", value: `${serveStats.firstServeInPercent}%` },
+    { label: "1st Serve In", value: `${serveStats.firstServeIn} / ${serveStats.firstServeInPercent}%` },
+    { label: "2nd Serve In", value: `${serveStats.secondServeIn} / ${serveStats.secondServeInPercent}%` },
     { label: "1st Serve Won", value: `${serveStats.firstServeWonPercent}%` },
     { label: "2nd Serve Won", value: `${serveStats.secondServeWonPercent}%` },
     { label: "Double Fault", value: game.special?.doubleFault ?? 0 },
@@ -949,12 +948,11 @@ const buildMetrics = (matchDate, opponent, notes) => {
     state.errors.backhandWide +
     state.errors.backhandNet;
 
-  const totalServes =
-    state.serve.firstAttempt +
-    state.serve.secondAttempt +
+  const resolvedServePoints =
     state.serve.firstServeIn +
-    state.serve.secondServeIn;
-  const servePoints = totalServes || state.serve.servePoints;
+    state.serve.secondServeIn +
+    state.serve.secondAttempt;
+  const servePoints = state.serve.servePoints || resolvedServePoints;
   return {
     date: matchDate,
     description: notes || opponent,
