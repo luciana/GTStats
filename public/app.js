@@ -675,14 +675,14 @@ const renderGameSummary = (game) => {
   const winnersTotal = game.totals?.winners ?? 0;
   const errorsTotal = game.totals?.errors ?? 0;
   const errorsPercent = safePercent(errorsTotal, totalPoints);
-  const forehandErrors =
-    (game.errors?.forehandLong ?? 0) +
-    (game.errors?.forehandWide ?? 0) +
-    (game.errors?.forehandNet ?? 0);
-  const backhandErrors =
-    (game.errors?.backhandLong ?? 0) +
-    (game.errors?.backhandWide ?? 0) +
-    (game.errors?.backhandNet ?? 0);
+  const forehandNetErrors = game.errors?.forehandNet ?? 0;
+  const forehandWideErrors = game.errors?.forehandWide ?? 0;
+  const forehandLongErrors = game.errors?.forehandLong ?? 0;
+  const forehandErrors = forehandLongErrors + forehandWideErrors + forehandNetErrors;
+  const backhandNetErrors = game.errors?.backhandNet ?? 0;
+  const backhandWideErrors = game.errors?.backhandWide ?? 0;
+  const backhandLongErrors = game.errors?.backhandLong ?? 0;
+  const backhandErrors = backhandLongErrors + backhandWideErrors + backhandNetErrors;
 
   const serveStats = resolveServeStats(game, totalPoints);
   const summaryItems = [
@@ -696,6 +696,8 @@ const renderGameSummary = (game) => {
     { label: "Winners", value: winnersTotal },
     { label: "Errors", value: `${errorsTotal} (${errorsPercent}%)` },
     { label: "Fore / Back Errors", value: `${forehandErrors} / ${backhandErrors}` },
+    { label: "Fore Errors Net/Wide/Long", value: `${forehandNetErrors} / ${forehandWideErrors} / ${forehandLongErrors}` },
+    { label: "Back Errors Net/Wide/Long", value: `${backhandNetErrors} / ${backhandWideErrors} / ${backhandLongErrors}` },
     { label: "Total Points", value: totalPoints }
   ];
 
