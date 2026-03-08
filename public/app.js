@@ -351,11 +351,26 @@ const scorePoint = (winner) => {
 
 const updateServeButtonsState = () => {
   const serveButtons = document.querySelectorAll(
-    '[data-action="firstServeAttempt"],[data-action="secondServeAttempt"],[data-action="firstServeIn"],[data-action="secondServeIn"],[data-action="winnerAce"]'
+    '[data-action="firstServeAttempt"],[data-action="secondServeAttempt"],[data-action="winnerAce"]'
   );
   serveButtons.forEach((button) => {
     button.disabled = !state.serving;
   });
+};
+
+const registerServeInForPoint = () => {
+  if (!state.serving) {
+    return;
+  }
+
+  if (state.context.firstServeMissed) {
+    state.serve.secondServeIn += 1;
+    state.context.serve = "Giulia second serve in";
+    return;
+  }
+
+  state.serve.firstServeIn += 1;
+  state.context.serve = "Giulia first serve in";
 };
 
 const trackServePoint = (winner) => {
@@ -397,17 +412,8 @@ const handleAction = (action) => {
       state.context.doubleFault = "Giulia";
       recordPointLog("-");
       break;
-    case "firstServeIn":
-      state.serve.firstServeIn += 1;
-      state.context.firstServeMissed = false;
-      state.context.serve = "Giulia first serve in";
-      break;
-    case "secondServeIn":
-      state.serve.secondServeIn += 1;
-      state.context.firstServeMissed = true;
-      state.context.serve = "Giulia second serve in";
-      break;
     case "wonPoint":
+      registerServeInForPoint();
       state.points.won += 1;
       if (!state.serving) {
         state.points.returnWon += 1;
@@ -420,6 +426,7 @@ const handleAction = (action) => {
       recordPointLog("won");
       break;
     case "winnerForehand":
+      registerServeInForPoint();
       state.winners.forehand += 1;
       state.context.winner = "forehand";
       trackServePoint("giulia");
@@ -427,6 +434,7 @@ const handleAction = (action) => {
       recordPointLog("won");
       break;
     case "winnerBackhand":
+      registerServeInForPoint();
       state.winners.backhand += 1;
       state.context.winner = "backhand";
       trackServePoint("giulia");
@@ -441,6 +449,7 @@ const handleAction = (action) => {
       recordPointLog("won");
       break;
     case "errorForehandLong":
+      registerServeInForPoint();
       state.errors.forehandLong += 1;
       trackServePoint("opponent");
       scorePoint("opponent");
@@ -448,6 +457,7 @@ const handleAction = (action) => {
       recordPointLog("-");
       break;
     case "errorForehandWide":
+      registerServeInForPoint();
       state.errors.forehandWide += 1;
       trackServePoint("opponent");
       scorePoint("opponent");
@@ -455,6 +465,7 @@ const handleAction = (action) => {
       recordPointLog("-");
       break;
     case "errorForehandNet":
+      registerServeInForPoint();
       state.errors.forehandNet += 1;
       trackServePoint("opponent");
       scorePoint("opponent");
@@ -462,6 +473,7 @@ const handleAction = (action) => {
       recordPointLog("-");
       break;
     case "errorBackhandLong":
+      registerServeInForPoint();
       state.errors.backhandLong += 1;
       trackServePoint("opponent");
       scorePoint("opponent");
@@ -469,6 +481,7 @@ const handleAction = (action) => {
       recordPointLog("-");
       break;
     case "errorBackhandWide":
+      registerServeInForPoint();
       state.errors.backhandWide += 1;
       trackServePoint("opponent");
       scorePoint("opponent");
@@ -476,6 +489,7 @@ const handleAction = (action) => {
       recordPointLog("-");
       break;
     case "errorBackhandNet":
+      registerServeInForPoint();
       state.errors.backhandNet += 1;
       trackServePoint("opponent");
       scorePoint("opponent");
@@ -490,6 +504,7 @@ const handleAction = (action) => {
       recordPointLog("-");
       break;
     case "opponentDoubleFault":
+      registerServeInForPoint();
       state.special.opponentDoubleFault += 1;
       trackServePoint("giulia");
       scorePoint("giulia");
@@ -497,6 +512,7 @@ const handleAction = (action) => {
       recordPointLog("-");
       break;
     case "opponentAce":
+      registerServeInForPoint();
       state.special.opponentAce += 1;
       trackServePoint("opponent");
       scorePoint("opponent");
@@ -504,6 +520,7 @@ const handleAction = (action) => {
       recordPointLog("-");
       break;
     case "opponentWinner":
+      registerServeInForPoint();
       state.special.opponentWinner += 1;
       trackServePoint("opponent");
       scorePoint("opponent");
@@ -588,14 +605,12 @@ const resolvePointBreakdown = (game) => {
 
 const resolveServeStats = (game, pointsPlayed) => {
   const serve = game.serve || {};
-  const totalServes =
-    (serve.firstAttempt ?? 0) +
-    (serve.secondAttempt ?? 0) +
-    (serve.firstServeIn ?? 0) +
-    (serve.secondServeIn ?? 0);
-  const servePoints = totalServes || serve.servePoints || (game.serving ? pointsPlayed : 0);
   const firstServeIn = serve.firstServeIn ?? 0;
   const secondServeIn = serve.secondServeIn ?? 0;
+  const secondServeAttempt = serve.secondAttempt ?? 0;
+
+  const resolvedServePoints = firstServeIn + secondServeIn + secondServeAttempt;
+  const servePoints = serve.servePoints || resolvedServePoints || (game.serving ? pointsPlayed : 0);
   const firstServeWon = serve.firstServeWon ?? 0;
   const secondServeWon = serve.secondServeWon ?? 0;
   return {
@@ -646,6 +661,22 @@ const renderGameMeta = (game) => {
     .join("");
 };
 
+const resolveRallyStats = (game) => {
+  const pointLogs = Array.isArray(game.logs)
+    ? game.logs.filter((entry) => typeof entry?.shot === "number" && entry.shot > 0)
+    : [];
+
+  if (!pointLogs.length) {
+    return { averageRally: 0, longestRally: 0 };
+  }
+
+  const totalRallies = pointLogs.reduce((sum, entry) => sum + (entry.rally || 0), 0);
+  const longestRally = pointLogs.reduce((max, entry) => Math.max(max, entry.rally || 0), 0);
+  const averageRally = Math.round((totalRallies / pointLogs.length) * 10) / 10;
+
+  return { averageRally, longestRally };
+};
+
 const renderGameSummary = (game) => {
   if (!dom.gameSummary) {
     return;
@@ -660,26 +691,33 @@ const renderGameSummary = (game) => {
   const winnersTotal = game.totals?.winners ?? 0;
   const errorsTotal = game.totals?.errors ?? 0;
   const errorsPercent = safePercent(errorsTotal, totalPoints);
-  const forehandErrors =
-    (game.errors?.forehandLong ?? 0) +
-    (game.errors?.forehandWide ?? 0) +
-    (game.errors?.forehandNet ?? 0);
-  const backhandErrors =
-    (game.errors?.backhandLong ?? 0) +
-    (game.errors?.backhandWide ?? 0) +
-    (game.errors?.backhandNet ?? 0);
+  const forehandNetErrors = game.errors?.forehandNet ?? 0;
+  const forehandWideErrors = game.errors?.forehandWide ?? 0;
+  const forehandLongErrors = game.errors?.forehandLong ?? 0;
+  const forehandErrors = forehandLongErrors + forehandWideErrors + forehandNetErrors;
+  const backhandNetErrors = game.errors?.backhandNet ?? 0;
+  const backhandWideErrors = game.errors?.backhandWide ?? 0;
+  const backhandLongErrors = game.errors?.backhandLong ?? 0;
+  const backhandErrors = backhandLongErrors + backhandWideErrors + backhandNetErrors;
 
   const serveStats = resolveServeStats(game, totalPoints);
+  const { averageRally, longestRally } = resolveRallyStats(game);
   const summaryItems = [
     { label: "Game Score", value: `${game.score?.gamesWon ?? 0} - ${game.score?.gamesLost ?? 0}` },
     { label: "Aces", value: game.winners?.aces ?? 0 },
-    { label: "1st Serves In", value: `${serveStats.firstServeInPercent}%` },
+    { label: "1st Serve In", value: `${serveStats.firstServeIn} / ${serveStats.firstServeInPercent}%` },
+    { label: "2nd Serve In", value: `${serveStats.secondServeIn} / ${serveStats.secondServeInPercent}%` },
     { label: "1st Serve Won", value: `${serveStats.firstServeWonPercent}%` },
     { label: "2nd Serve Won", value: `${serveStats.secondServeWonPercent}%` },
     { label: "Double Fault", value: game.special?.doubleFault ?? 0 },
     { label: "Winners", value: winnersTotal },
+    { label: "Winners Fore/Back", value: `${game.winners?.forehand ?? 0} / ${game.winners?.backhand ?? 0}` },
     { label: "Errors", value: `${errorsTotal} (${errorsPercent}%)` },
     { label: "Fore / Back Errors", value: `${forehandErrors} / ${backhandErrors}` },
+    { label: "Fore Errors Net/Wide/Long", value: `${forehandNetErrors} / ${forehandWideErrors} / ${forehandLongErrors}` },
+    { label: "Back Errors Net/Wide/Long", value: `${backhandNetErrors} / ${backhandWideErrors} / ${backhandLongErrors}` },
+    { label: "Average Rally", value: averageRally },
+    { label: "Longest Rally", value: longestRally },
     { label: "Total Points", value: totalPoints }
   ];
 
@@ -932,12 +970,11 @@ const buildMetrics = (matchDate, opponent, notes) => {
     state.errors.backhandWide +
     state.errors.backhandNet;
 
-  const totalServes =
-    state.serve.firstAttempt +
-    state.serve.secondAttempt +
+  const resolvedServePoints =
     state.serve.firstServeIn +
-    state.serve.secondServeIn;
-  const servePoints = totalServes || state.serve.servePoints;
+    state.serve.secondServeIn +
+    state.serve.secondAttempt;
+  const servePoints = state.serve.servePoints || resolvedServePoints;
   return {
     date: matchDate,
     description: notes || opponent,
