@@ -661,6 +661,22 @@ const renderGameMeta = (game) => {
     .join("");
 };
 
+const resolveRallyStats = (game) => {
+  const pointLogs = Array.isArray(game.logs)
+    ? game.logs.filter((entry) => typeof entry?.shot === "number" && entry.shot > 0)
+    : [];
+
+  if (!pointLogs.length) {
+    return { averageRally: 0, longestRally: 0 };
+  }
+
+  const totalRallies = pointLogs.reduce((sum, entry) => sum + (entry.rally || 0), 0);
+  const longestRally = pointLogs.reduce((max, entry) => Math.max(max, entry.rally || 0), 0);
+  const averageRally = Math.round((totalRallies / pointLogs.length) * 10) / 10;
+
+  return { averageRally, longestRally };
+};
+
 const renderGameSummary = (game) => {
   if (!dom.gameSummary) {
     return;
@@ -685,6 +701,7 @@ const renderGameSummary = (game) => {
   const backhandErrors = backhandLongErrors + backhandWideErrors + backhandNetErrors;
 
   const serveStats = resolveServeStats(game, totalPoints);
+  const { averageRally, longestRally } = resolveRallyStats(game);
   const summaryItems = [
     { label: "Game Score", value: `${game.score?.gamesWon ?? 0} - ${game.score?.gamesLost ?? 0}` },
     { label: "Aces", value: game.winners?.aces ?? 0 },
@@ -699,6 +716,8 @@ const renderGameSummary = (game) => {
     { label: "Fore / Back Errors", value: `${forehandErrors} / ${backhandErrors}` },
     { label: "Fore Errors Net/Wide/Long", value: `${forehandNetErrors} / ${forehandWideErrors} / ${forehandLongErrors}` },
     { label: "Back Errors Net/Wide/Long", value: `${backhandNetErrors} / ${backhandWideErrors} / ${backhandLongErrors}` },
+    { label: "Average Rally", value: averageRally },
+    { label: "Longest Rally", value: longestRally },
     { label: "Total Points", value: totalPoints }
   ];
 
