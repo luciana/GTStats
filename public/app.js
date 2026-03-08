@@ -694,6 +694,7 @@ const renderGameSummary = (game) => {
     { label: "2nd Serve Won", value: `${serveStats.secondServeWonPercent}%` },
     { label: "Double Fault", value: game.special?.doubleFault ?? 0 },
     { label: "Winners", value: winnersTotal },
+    { label: "Winners Fore/Back", value: `${game.winners?.forehand ?? 0} / ${game.winners?.backhand ?? 0}` },
     { label: "Errors", value: `${errorsTotal} (${errorsPercent}%)` },
     { label: "Fore / Back Errors", value: `${forehandErrors} / ${backhandErrors}` },
     { label: "Fore Errors Net/Wide/Long", value: `${forehandNetErrors} / ${forehandWideErrors} / ${forehandLongErrors}` },
